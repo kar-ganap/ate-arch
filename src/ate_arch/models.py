@@ -117,6 +117,72 @@ class Partition(BaseModel):
     cross_partition_conflicts: list[str]
 
 
+class MessageRole(StrEnum):
+    """Role in a stakeholder interview conversation."""
+
+    USER = "user"
+    ASSISTANT = "assistant"
+
+
+class InterviewMessage(BaseModel):
+    """A single message in a stakeholder interview."""
+
+    role: MessageRole
+    content: str
+    timestamp: datetime
+
+    @field_validator("content")
+    @classmethod
+    def content_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            msg = "Message content must not be empty"
+            raise ValueError(msg)
+        return v
+
+
+class InterviewTurn(BaseModel):
+    """A question-response pair in an interview."""
+
+    question: str
+    response: str
+    turn_number: int
+    timestamp: datetime
+
+
+class InterviewTranscript(BaseModel):
+    """Complete transcript of all interviews with a single stakeholder."""
+
+    scenario_id: str
+    stakeholder_id: str
+    turns: list[InterviewTurn]
+    started_at: datetime
+    completed_at: datetime | None = None
+
+    @property
+    def turn_count(self) -> int:
+        return len(self.turns)
+
+    def to_messages(self) -> list[InterviewMessage]:
+        """Flatten turns into a chronological message list."""
+        messages: list[InterviewMessage] = []
+        for turn in self.turns:
+            messages.append(
+                InterviewMessage(
+                    role=MessageRole.USER,
+                    content=turn.question,
+                    timestamp=turn.timestamp,
+                )
+            )
+            messages.append(
+                InterviewMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=turn.response,
+                    timestamp=turn.timestamp,
+                )
+            )
+        return messages
+
+
 class RubricWeights(BaseModel):
     """Weights for the 4-layer rubric composite score."""
 
