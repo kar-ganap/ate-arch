@@ -74,14 +74,14 @@ ate-arch/
 
 ## Current State
 
-**Phase 3 complete.** Execution harness built: `scaffold_run()` creates run
-directories with session guides, metadata templates, and interview state files.
-`ate-arch interview` CLI command enables agents to interview stakeholders during
-runs via CLI-per-invocation with file-based state persistence (`initial_turns`
-on `StakeholderSimulator`). Opening prompts differentiate control (hub-and-spoke,
-must delegate via Task tool) from treatment (symmetric peers, coordinate with
-peer). Session guides are copy-paste ready. Preflight checks validate env.
-143 unit tests (all mocked, zero real LLM calls).
+**Phase 4 complete.** 4-layer rubric scoring module built: `score_l1()` through
+`score_l4()` evaluate architecture documents against ground truth using
+LLM-based semantic matching. L1 checks 23 hard constraints, L2 checks 8
+conflicts, L3 judges resolution quality (OPTIMAL/ACCEPTABLE/POOR/MISSING via
+LLM-as-judge), L4 checks 4 hidden dependencies. `ScoringResult` with per-item
+evidence aggregates to `RunResult` with composite score. `ate-arch score`
+CLI command scores a run end-to-end. Temperature 0.3 for scoring (not 0.0 —
+allows flexible reasoning). 206 unit tests (all mocked, zero real LLM calls).
 
 ## Phases
 
@@ -91,7 +91,7 @@ peer). Session guides are copy-paste ready. Preflight checks validate env.
 | 1 | `phase-1-scenario` | Complete |
 | 2 | `phase-2-simulator` | Complete |
 | 3 | `phase-3-harness` | Complete |
-| 4 | `phase-4-rubric` | Pending |
+| 4 | `phase-4-rubric` | Complete |
 | 5 | `phase-5-pilot` | Pending |
 | 6 | `phase-6-execution` | Pending |
 | 7 | `phase-7-analysis` | Pending |

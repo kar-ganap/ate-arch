@@ -122,3 +122,43 @@ class TestListRunsCommand:
         assert result.exit_code == 0
         assert "control-A-1" in result.output
         assert "treatment-B-2" in result.output
+
+
+class TestScoreCommand:
+    def test_score_missing_document(self, tmp_path: Path) -> None:
+        run_dir = tmp_path / "runs" / "control-A-1"
+        run_dir.mkdir(parents=True)
+        with patch("ate_arch.cli.get_run_dir", return_value=run_dir):
+            result = runner.invoke(app, ["score", "control-A-1"])
+        assert result.exit_code == 1
+        assert "not found" in result.output.lower()
+
+    def test_score_runs_scoring(self, tmp_path: Path) -> None:
+        run_dir = tmp_path / "runs" / "control-A-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "architecture.md").write_text("# Test architecture")
+
+        mock_scoring = MagicMock()
+        mock_run_result = MagicMock()
+        mock_run_result.l1_constraint_discovery = 0.8
+        mock_run_result.l2_conflict_identification = 0.6
+        mock_run_result.l3_score.return_value = 0.5
+        mock_run_result.l4_hidden_dependencies = 0.25
+        mock_run_result.composite_score.return_value = 0.55
+        mock_scoring.to_run_result.return_value = mock_run_result
+
+        with (
+            patch("ate_arch.cli.get_run_dir", return_value=run_dir),
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+            patch("ate_arch.scoring.score_run", return_value=mock_scoring),
+            patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
+            patch("ate_arch.config.load_conflicts", return_value=[]),
+            patch("ate_arch.config.load_all_hidden_dependencies", return_value=[]),
+            patch("ate_arch.simulator.AnthropicLLMClient"),
+            patch("ate_arch.scoring.save_result"),
+            patch("ate_arch.scoring.save_scoring_detail"),
+        ):
+            result = runner.invoke(app, ["score", "control-A-1"])
+
+        assert result.exit_code == 0
+        assert "Scored" in result.output

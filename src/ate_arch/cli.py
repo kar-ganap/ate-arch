@@ -130,6 +130,84 @@ def update_metadata_cmd(
     typer.echo(f"Updated metadata for '{run_id}'")
 
 
+@app.command(name="score")
+def score_cmd(
+    run_id: str = typer.Argument(help="Run ID to score"),
+    document_path: str | None = typer.Option(
+        None, help="Path to architecture.md (default: run dir)"
+    ),
+    model: str = typer.Option("claude-haiku-4-5-20251001", help="Model for scoring"),
+) -> None:
+    """Score an architecture document against the rubric."""
+    from pathlib import Path
+
+    from ate_arch.config import (
+        load_all_hard_constraints,
+        load_all_hidden_dependencies,
+        load_conflicts,
+    )
+    from ate_arch.scoring import (
+        save_result,
+        save_scoring_detail,
+        score_run,
+    )
+    from ate_arch.simulator import AnthropicLLMClient
+
+    run_dir = get_run_dir(run_id)
+
+    # Load architecture document
+    if document_path:
+        doc_path = Path(document_path)
+    else:
+        doc_path = run_dir / "architecture.md"
+
+    if not doc_path.exists():
+        typer.echo(f"Architecture document not found: {doc_path}")
+        raise typer.Exit(1)
+
+    document = doc_path.read_text()
+
+    # Parse run ID to get architecture and partition
+    parts = run_id.split("-")
+    arch = Architecture(parts[0])
+    partition = PartitionCondition(parts[1])
+
+    # Load scoring config
+    constraints = load_all_hard_constraints(SCENARIO_ID)
+    conflicts = load_conflicts(SCENARIO_ID)
+    dependencies = load_all_hidden_dependencies(SCENARIO_ID)
+
+    # Score
+    llm_client = AnthropicLLMClient()
+    scoring = score_run(
+        run_id,
+        document,
+        constraints,
+        conflicts,
+        dependencies,
+        llm_client,
+        architecture=arch,
+        partition_condition=partition,
+        model=model,
+    )
+
+    # Persist
+    scores_dir = DATA_DIR / "scores"
+    run_result = scoring.to_run_result(arch, partition)
+    save_result(run_result, scores_dir)
+    save_scoring_detail(scoring, scores_dir)
+
+    # Print summary
+    typer.echo(f"Scored run '{run_id}':")
+    typer.echo(f"  L1 (Constraint Discovery): {run_result.l1_constraint_discovery:.2f}")
+    typer.echo(f"  L2 (Conflict Identification): {run_result.l2_conflict_identification:.2f}")
+    typer.echo(f"  L3 (Resolution Quality): {run_result.l3_score():.2f}")
+    typer.echo(f"  L4 (Hidden Dependencies): {run_result.l4_hidden_dependencies:.2f}")
+    from ate_arch.models import RubricWeights
+
+    typer.echo(f"  Composite: {run_result.composite_score(RubricWeights()):.2f}")
+
+
 @app.command(name="list-runs")
 def list_runs_cmd() -> None:
     """List all scaffolded runs."""
