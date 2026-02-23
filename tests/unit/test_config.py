@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 
 from ate_arch.config import (
+    load_all_hard_constraints,
+    load_all_hidden_dependencies,
     load_all_stakeholders,
     load_conflicts,
     load_partitions,
@@ -180,3 +182,33 @@ class TestLoadPartitions:
         for p in partitions:
             combined = set(p.within_partition_conflicts) | set(p.cross_partition_conflicts)
             assert combined == conflict_ids, f"Condition {p.condition}: not all conflicts assigned"
+
+
+# --- Aggregate helpers ---
+
+
+class TestLoadAllHardConstraints:
+    def test_count(self) -> None:
+        constraints = load_all_hard_constraints(SCENARIO_ID)
+        assert len(constraints) == 23
+
+    def test_all_are_hard(self) -> None:
+        constraints = load_all_hard_constraints(SCENARIO_ID)
+        for c in constraints:
+            assert c.type == ConstraintType.HARD
+
+    def test_ids_unique(self) -> None:
+        constraints = load_all_hard_constraints(SCENARIO_ID)
+        ids = [c.id for c in constraints]
+        assert len(ids) == len(set(ids))
+
+
+class TestLoadAllHiddenDependencies:
+    def test_count(self) -> None:
+        deps = load_all_hidden_dependencies(SCENARIO_ID)
+        assert len(deps) == 4
+
+    def test_ids(self) -> None:
+        deps = load_all_hidden_dependencies(SCENARIO_ID)
+        ids = {d.id for d in deps}
+        assert ids == {"HD1", "HD2", "HD3", "HD4"}

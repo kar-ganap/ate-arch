@@ -1,0 +1,16 @@
+scenario: scenario_b
+
+weights:
+  l1: 0.25
+  l2: 0.25
+  l3: 0.30
+  l4: 0.20
+
+scoring_method:
+  l1: llm_semantic_match
+  l2: llm_semantic_match
+  l3: llm_as_judge
+  l4: llm_semantic_match
+
+judge_model: claude-haiku-4-5-20251001
+judge_temperature: 0.3

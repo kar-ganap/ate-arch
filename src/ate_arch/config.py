@@ -6,7 +6,15 @@ from pathlib import Path
 
 import yaml
 
-from ate_arch.models import Conflict, Partition, Scenario, Stakeholder
+from ate_arch.models import (
+    Conflict,
+    Constraint,
+    ConstraintType,
+    HiddenDependency,
+    Partition,
+    Scenario,
+    Stakeholder,
+)
 
 CONFIG_DIR = Path(__file__).parent.parent.parent / "config"
 
@@ -39,6 +47,24 @@ def load_all_stakeholders(scenario_id: str) -> list[Stakeholder]:
     """Load all stakeholder constraint sheets for a scenario."""
     scenario = load_scenario(scenario_id)
     return [load_stakeholder(scenario_id, sid) for sid in scenario.stakeholder_ids]
+
+
+def load_all_hard_constraints(scenario_id: str) -> list[Constraint]:
+    """Load all hard constraints across all stakeholders for a scenario."""
+    stakeholders = load_all_stakeholders(scenario_id)
+    constraints: list[Constraint] = []
+    for s in stakeholders:
+        constraints.extend(c for c in s.constraints if c.type == ConstraintType.HARD)
+    return constraints
+
+
+def load_all_hidden_dependencies(scenario_id: str) -> list[HiddenDependency]:
+    """Load all hidden dependencies across all stakeholders for a scenario."""
+    stakeholders = load_all_stakeholders(scenario_id)
+    deps: list[HiddenDependency] = []
+    for s in stakeholders:
+        deps.extend(s.hidden_dependencies)
+    return deps
 
 
 def load_conflicts(scenario_id: str) -> list[Conflict]:
