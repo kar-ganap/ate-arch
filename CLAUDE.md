@@ -49,6 +49,7 @@ ate-arch/
 │   ├── experiment-design.md   # THE NORTH STAR
 │   └── phases/                # plan + retro per phase
 ├── data/                      # Raw experiment data (gitignored contents)
+│   ├── runs/                  # Per-run directories (scaffolded)
 │   ├── transcripts/
 │   ├── outputs/               # Architecture docs produced by agents
 │   └── scores/
@@ -59,6 +60,8 @@ ate-arch/
 │   ├── simulator.py           # LLM stakeholder simulator
 │   ├── harness.py             # Execution harness
 │   ├── scoring.py             # 4-layer rubric scoring
+│   ├── batch.py               # Batch scaffolding & verification
+│   ├── comms.py               # Communication analysis
 │   └── analysis.py            # Statistical analysis
 ├── tests/
 │   └── unit/                  # Mocked tests
@@ -74,14 +77,11 @@ ate-arch/
 
 ## Current State
 
-**Phase 4 complete.** 4-layer rubric scoring module built: `score_l1()` through
-`score_l4()` evaluate architecture documents against ground truth using
-LLM-based semantic matching. L1 checks 23 hard constraints, L2 checks 8
-conflicts, L3 judges resolution quality (OPTIMAL/ACCEPTABLE/POOR/MISSING via
-LLM-as-judge), L4 checks 4 hidden dependencies. `ScoringResult` with per-item
-evidence aggregates to `RunResult` with composite score. `ate-arch score`
-CLI command scores a run end-to-end. Temperature 0.3 for scoring (not 0.0 —
-allows flexible reasoning). 206 unit tests (all mocked, zero real LLM calls).
+**Phase 5 in progress.** Tooling complete: `batch.py` (batch scaffolding +
+verification), `comms.py` (JSONL transcript parsing + communication analysis),
+3 new CLI commands (`batch-scaffold`, `verify-run`, `analyze-comms`), execution
+guide. 251 unit tests (all mocked, zero real LLM calls). Live pilot runs
+(control-A-1, treatment-A-1, control-C-1) pending.
 
 ## Phases
 
@@ -92,7 +92,7 @@ allows flexible reasoning). 206 unit tests (all mocked, zero real LLM calls).
 | 2 | `phase-2-simulator` | Complete |
 | 3 | `phase-3-harness` | Complete |
 | 4 | `phase-4-rubric` | Complete |
-| 5 | `phase-5-pilot` | Pending |
+| 5 | `phase-5-pilot` | In Progress |
 | 6 | `phase-6-execution` | Pending |
 | 7 | `phase-7-analysis` | Pending |
 

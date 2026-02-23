@@ -21,9 +21,11 @@ venv/
 Thumbs.db
 
 # Experiment data (raw data preserved locally, not in repo)
+data/runs/*
 data/transcripts/*
 data/outputs/*
 data/scores/*
+!data/runs/.gitkeep
 !data/transcripts/.gitkeep
 !data/outputs/.gitkeep
 !data/scores/.gitkeep
