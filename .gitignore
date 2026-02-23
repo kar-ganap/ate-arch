@@ -20,6 +20,9 @@ venv/
 .DS_Store
 Thumbs.db
 
+# Environment
+.env
+
 # Experiment data (raw data preserved locally, not in repo)
 data/runs/*
 data/transcripts/*

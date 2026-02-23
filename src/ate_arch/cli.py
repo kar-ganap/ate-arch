@@ -26,6 +26,13 @@ app = typer.Typer(name="ate-arch", help="Agent Teams Eval: Architecture Design")
 @app.callback()
 def main() -> None:
     """Agent Teams Eval — Architecture Design experiment tooling."""
+    from pathlib import Path
+
+    from dotenv import load_dotenv
+
+    # Load .env from project root (overrides shell env)
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    load_dotenv(env_path, override=True)
 
 
 @app.command()
