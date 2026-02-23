@@ -52,7 +52,8 @@ ate-arch/
 │   ├── runs/                  # Per-run directories (scaffolded)
 │   ├── transcripts/
 │   ├── outputs/               # Architecture docs produced by agents
-│   └── scores/
+│   ├── scores/
+│   └── comms/                 # Communication analysis summaries
 ├── src/ate_arch/
 │   ├── models.py              # Pydantic models
 │   ├── config.py              # YAML loading
@@ -77,10 +78,15 @@ ate-arch/
 
 ## Current State
 
-**Phase 5 complete.** 253 unit tests. 4 pilot runs scored (control-A-1,
-treatment-A-1, control-C-1, treatment-C-1). Composite scores: 0.78–1.00. Zero
-peer-to-peer communication in treatment runs (coordinator-mediated only).
-L1/L2 ceiling at 1.00; L3/L4 carry the signal.
+**Phase 6 in progress (tooling complete, execution pending).** 297 unit tests.
+4 pilot runs scored + retroactive comms analysis. Phase 6 added: indirect
+collaboration tracking (FileOperation/IndirectCollaboration), relay transparency
+metric (RelayEvent/RelayAnalysis), comms persistence, `postprocess` CLI command,
+enhanced `list-runs` with scored/complete/scaffolded status. Retroactive analysis
+on all 4 pilots confirms: zero indirect collaboration detected (transcript
+opacity — all file ops appear coordinator-level in Agent Teams), zero relay
+events (Task tool returns "Spawned successfully", not agent reports). 16 new
+runs pending.
 
 ## Phases
 
@@ -92,7 +98,7 @@ L1/L2 ceiling at 1.00; L3/L4 carry the signal.
 | 3 | `phase-3-harness` | Complete |
 | 4 | `phase-4-rubric` | Complete |
 | 5 | `phase-5-pilot` | Complete |
-| 6 | `phase-6-execution` | Pending |
+| 6 | `phase-6-execution` | In progress (tooling done, runs pending) |
 | 7 | `phase-7-analysis` | Pending |
 
 ## Known Gotchas
@@ -106,3 +112,9 @@ L1/L2 ceiling at 1.00; L3/L4 carry the signal.
   collaboration happens through shared file I/O (Read/Edit on same file).
 - Treatment prompt must be from lead-agent vantage (sees all stakeholders),
   not from individual peer's perspective.
+- Agent Teams transcript opacity: treatment transcripts have zero agentIds in
+  progress entries. All file operations appear coordinator-level. Indirect
+  collaboration detection requires agentId attribution, which is unavailable.
+- Agent Teams Task tool results are just "Spawned successfully" — no
+  substantive agent reports. Relay transparency metric requires a different
+  matching strategy (e.g., pairing SendMessages by temporal sequence).

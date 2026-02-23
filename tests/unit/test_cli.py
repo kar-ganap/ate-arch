@@ -248,3 +248,266 @@ class TestAnalyzeCommsCommand:
             result = runner.invoke(app, ["analyze-comms", "control-A-1", str(transcript)])
         assert result.exit_code == 0
         assert "0" in result.output
+
+    def test_analyze_shows_indirect_collab(self, tmp_path: Path) -> None:
+        """analyze-comms shows indirect collaboration info."""
+        from ate_arch.comms import (
+            CommunicationSummary,
+            FileOperation,
+            IndirectCollaboration,
+        )
+
+        summary = CommunicationSummary(
+            run_id="treatment-C-1",
+            total_messages=0,
+            peer_messages=[],
+            unique_pairs=0,
+            has_indirect_collaboration=True,
+            file_collaborations=[
+                IndirectCollaboration(
+                    file_path="/work/architecture.md",
+                    operations=[
+                        FileOperation(
+                            agent_id="coordinator",
+                            operation="Write",
+                            file_path="/work/architecture.md",
+                        ),
+                        FileOperation(
+                            agent_id="abc123",
+                            operation="Read",
+                            file_path="/work/architecture.md",
+                        ),
+                    ],
+                    agent_count=2,
+                    is_collaborative=True,
+                ),
+            ],
+        )
+        transcript = tmp_path / "transcript.jsonl"
+        transcript.write_text("")
+        with (
+            patch("ate_arch.comms.analyze_session", return_value=summary),
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+        ):
+            result = runner.invoke(
+                app,
+                ["analyze-comms", "treatment-C-1", str(transcript)],
+            )
+        assert result.exit_code == 0
+        assert "indirect collaboration" in result.output.lower()
+
+    def test_analyze_shows_relay(self, tmp_path: Path) -> None:
+        """analyze-comms shows relay transparency info."""
+        from ate_arch.comms import (
+            CommunicationSummary,
+            PeerMessage,
+            RelayAnalysis,
+            RelayEvent,
+        )
+
+        summary = CommunicationSummary(
+            run_id="treatment-A-1",
+            total_messages=1,
+            peer_messages=[
+                PeerMessage(sender="", recipient="agent-2", content_preview="hello"),
+            ],
+            unique_pairs=1,
+            relay_analysis=RelayAnalysis(
+                relay_events=[
+                    RelayEvent(
+                        source_agent="agent-1",
+                        target_agent="agent-2",
+                        source_content="report",
+                        target_content="relay",
+                        similarity=0.75,
+                    ),
+                ],
+                mean_similarity=0.75,
+                relay_count=1,
+            ),
+        )
+        transcript = tmp_path / "transcript.jsonl"
+        transcript.write_text("")
+        with (
+            patch("ate_arch.comms.analyze_session", return_value=summary),
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+        ):
+            result = runner.invoke(
+                app,
+                ["analyze-comms", "treatment-A-1", str(transcript)],
+            )
+        assert result.exit_code == 0
+        assert "relay" in result.output.lower()
+        assert "0.75" in result.output
+
+
+class TestEnhancedListRuns:
+    def test_scored_status(self, tmp_path: Path) -> None:
+        """Scored runs show [scored] and composite score."""
+        import json
+
+        runs_dir = tmp_path / "runs"
+        (runs_dir / "control-A-1").mkdir(parents=True)
+        scores_dir = tmp_path / "scores"
+        scores_dir.mkdir()
+        score_data = {
+            "run_id": "control-A-1",
+            "architecture": "control",
+            "partition_condition": "A",
+            "l1_constraint_discovery": 1.0,
+            "l2_conflict_identification": 1.0,
+            "l3_resolutions": [],
+            "l4_hidden_dependencies": 0.75,
+        }
+        (scores_dir / "control-A-1.json").write_text(json.dumps(score_data))
+
+        with patch("ate_arch.cli.DATA_DIR", tmp_path):
+            result = runner.invoke(app, ["list-runs"])
+        assert result.exit_code == 0
+        assert "scored" in result.output.lower()
+
+    def test_scaffolded_status(self, tmp_path: Path) -> None:
+        """Scaffolded-only runs show [scaffolded]."""
+        runs_dir = tmp_path / "runs"
+        (runs_dir / "control-A-2").mkdir(parents=True)
+
+        with patch("ate_arch.cli.DATA_DIR", tmp_path):
+            result = runner.invoke(app, ["list-runs"])
+        assert result.exit_code == 0
+        assert "scaffolded" in result.output.lower()
+
+
+class TestPostprocessCommand:
+    def test_happy_path(self, tmp_path: Path) -> None:
+        """postprocess chains metadata update + verify + score + comms."""
+        run_dir = tmp_path / "runs" / "control-A-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "architecture.md").write_text("# Test")
+        transcript = tmp_path / "transcript.jsonl"
+        transcript.write_text("")
+
+        mock_metadata = MagicMock()
+        mock_metadata.started_at = None
+
+        mock_scoring = MagicMock()
+        mock_run_result = MagicMock()
+        mock_run_result.l1_constraint_discovery = 1.0
+        mock_run_result.l2_conflict_identification = 1.0
+        mock_run_result.l3_score.return_value = 0.75
+        mock_run_result.l4_hidden_dependencies = 0.75
+        mock_run_result.composite_score.return_value = 0.88
+        mock_scoring.to_run_result.return_value = mock_run_result
+
+        from ate_arch.comms import CommunicationSummary
+
+        comms_summary = CommunicationSummary(
+            run_id="control-A-1",
+            total_messages=0,
+            peer_messages=[],
+            unique_pairs=0,
+        )
+
+        with (
+            patch("ate_arch.cli.get_run_dir", return_value=run_dir),
+            patch("ate_arch.cli.load_metadata", return_value=mock_metadata),
+            patch("ate_arch.cli.save_metadata"),
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+            patch("ate_arch.scoring.score_run", return_value=mock_scoring),
+            patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
+            patch("ate_arch.config.load_conflicts", return_value=[]),
+            patch("ate_arch.config.load_all_hidden_dependencies", return_value=[]),
+            patch("ate_arch.simulator.AnthropicLLMClient"),
+            patch("ate_arch.scoring.save_result"),
+            patch("ate_arch.scoring.save_scoring_detail"),
+            patch("ate_arch.comms.analyze_session", return_value=comms_summary),
+        ):
+            result = runner.invoke(
+                app,
+                [
+                    "postprocess",
+                    "control-A-1",
+                    "--wall-clock",
+                    "12.3",
+                    "--interview-count",
+                    "16",
+                    "--transcript",
+                    str(transcript),
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "composite" in result.output.lower()
+
+    def test_no_transcript_skips_comms(self, tmp_path: Path) -> None:
+        """postprocess without transcript skips comms analysis."""
+        run_dir = tmp_path / "runs" / "control-A-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "architecture.md").write_text("# Test")
+
+        mock_metadata = MagicMock()
+        mock_metadata.started_at = None
+
+        mock_scoring = MagicMock()
+        mock_run_result = MagicMock()
+        mock_run_result.l1_constraint_discovery = 1.0
+        mock_run_result.l2_conflict_identification = 1.0
+        mock_run_result.l3_score.return_value = 0.75
+        mock_run_result.l4_hidden_dependencies = 0.75
+        mock_run_result.composite_score.return_value = 0.88
+        mock_scoring.to_run_result.return_value = mock_run_result
+
+        with (
+            patch("ate_arch.cli.get_run_dir", return_value=run_dir),
+            patch("ate_arch.cli.load_metadata", return_value=mock_metadata),
+            patch("ate_arch.cli.save_metadata"),
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+            patch("ate_arch.scoring.score_run", return_value=mock_scoring),
+            patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
+            patch("ate_arch.config.load_conflicts", return_value=[]),
+            patch("ate_arch.config.load_all_hidden_dependencies", return_value=[]),
+            patch("ate_arch.simulator.AnthropicLLMClient"),
+            patch("ate_arch.scoring.save_result"),
+            patch("ate_arch.scoring.save_scoring_detail"),
+        ):
+            result = runner.invoke(
+                app,
+                [
+                    "postprocess",
+                    "control-A-1",
+                    "--wall-clock",
+                    "12.3",
+                    "--interview-count",
+                    "16",
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "composite" in result.output.lower()
+
+    def test_missing_architecture_fails(self, tmp_path: Path) -> None:
+        """postprocess fails if architecture.md is missing."""
+        run_dir = tmp_path / "runs" / "control-A-1"
+        run_dir.mkdir(parents=True)
+
+        mock_metadata = MagicMock()
+        mock_metadata.started_at = None
+
+        with (
+            patch("ate_arch.cli.get_run_dir", return_value=run_dir),
+            patch("ate_arch.cli.load_metadata", return_value=mock_metadata),
+            patch("ate_arch.cli.save_metadata"),
+        ):
+            result = runner.invoke(
+                app,
+                [
+                    "postprocess",
+                    "control-A-1",
+                    "--wall-clock",
+                    "10",
+                    "--interview-count",
+                    "6",
+                ],
+            )
+
+        assert result.exit_code == 1
+        assert "not found" in result.output.lower()

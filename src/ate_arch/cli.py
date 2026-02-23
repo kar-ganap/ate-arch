@@ -217,7 +217,7 @@ def score_cmd(
 
 @app.command(name="list-runs")
 def list_runs_cmd() -> None:
-    """List all scaffolded runs."""
+    """List all scaffolded runs with status."""
     runs_dir = DATA_DIR / "runs"
     if not runs_dir.exists():
         typer.echo("No runs directory found.")
@@ -226,9 +226,32 @@ def list_runs_cmd() -> None:
     if not run_dirs:
         typer.echo("No runs found.")
         return
+
+    scores_dir = DATA_DIR / "scores"
+
     typer.echo(f"Found {len(run_dirs)} run(s):")
     for name in run_dirs:
-        typer.echo(f"  {name}")
+        score_file = scores_dir / f"{name}.json" if scores_dir.exists() else None
+        run_dir = runs_dir / name
+        has_arch = (run_dir / "architecture.md").exists()
+
+        if score_file and score_file.exists():
+            # Load score to show composite
+            import json
+
+            try:
+                data = json.loads(score_file.read_text())
+                from ate_arch.models import RubricWeights, RunResult
+
+                rr = RunResult.model_validate(data)
+                comp = rr.composite_score(RubricWeights())
+                typer.echo(f"  {name:<20} [scored]      {comp:.2f}")
+            except Exception:
+                typer.echo(f"  {name:<20} [scored]")
+        elif has_arch:
+            typer.echo(f"  {name:<20} [complete]")
+        else:
+            typer.echo(f"  {name:<20} [scaffolded]")
 
 
 @app.command(name="batch-scaffold")
@@ -277,7 +300,7 @@ def analyze_comms_cmd(
     """Analyze inter-agent communication from a transcript."""
     from pathlib import Path
 
-    from ate_arch.comms import analyze_session
+    from ate_arch.comms import analyze_session, save_comms_summary
 
     path = Path(transcript_path)
     if not path.exists():
@@ -285,6 +308,11 @@ def analyze_comms_cmd(
         raise typer.Exit(1)
 
     summary = analyze_session(run_id, path)
+
+    # Persist
+    comms_dir = DATA_DIR / "comms"
+    save_comms_summary(summary, comms_dir)
+
     typer.echo(f"Communication analysis for '{run_id}':")
     typer.echo(f"  Total peer messages: {summary.total_messages}")
     typer.echo(f"  Unique sender→recipient pairs: {summary.unique_pairs}")
@@ -292,6 +320,119 @@ def analyze_comms_cmd(
         typer.echo("  Messages:")
         for msg in summary.peer_messages:
             typer.echo(f"    {msg.sender} → {msg.recipient}: {msg.content_preview[:80]}")
+
+    # Phase 6: indirect collaboration
+    if summary.file_collaborations:
+        collab_count = sum(1 for c in summary.file_collaborations if c.is_collaborative)
+        typer.echo(f"  Indirect collaboration: {summary.has_indirect_collaboration}")
+        typer.echo(f"  File operations tracked: {len(summary.file_collaborations)} files")
+        typer.echo(f"  Collaborative files: {collab_count}")
+        for fc in summary.file_collaborations:
+            label = "collaborative" if fc.is_collaborative else "single-agent"
+            typer.echo(f"    {fc.file_path} ({fc.agent_count} agents, {label})")
+
+    # Phase 6: relay transparency
+    if summary.relay_analysis is not None:
+        ra = summary.relay_analysis
+        typer.echo(
+            f"  Relay transparency: {ra.relay_count} relays, "
+            f"mean similarity {ra.mean_similarity:.2f}"
+        )
+        for event in ra.relay_events:
+            typer.echo(
+                f"    {event.source_agent} → lead → {event.target_agent}: "
+                f"similarity {event.similarity:.2f}"
+            )
+
+
+@app.command(name="postprocess")
+def postprocess_cmd(
+    run_id: str = typer.Argument(help="Run ID to postprocess"),
+    wall_clock: float = typer.Option(..., help="Wall-clock minutes"),
+    interview_count: int = typer.Option(..., help="Number of interviews"),
+    transcript: str | None = typer.Option(None, help="Path to JSONL transcript"),
+    model: str = typer.Option("claude-opus-4-6", help="Model used for run"),
+    scoring_model: str = typer.Option("claude-haiku-4-5-20251001", help="Model for scoring"),
+) -> None:
+    """Run all post-run processing: metadata → score → comms."""
+    from pathlib import Path
+
+    # Step 1: Update metadata
+    run_dir = get_run_dir(run_id)
+    metadata = load_metadata(run_dir)
+    metadata.wall_clock_minutes = wall_clock
+    metadata.model = model
+    metadata.started_at = metadata.started_at or datetime.now(UTC)
+    metadata.interview_count = interview_count
+    save_metadata(metadata, run_dir)
+    typer.echo(f"Updated metadata for '{run_id}'")
+
+    # Step 2: Score
+    doc_path = run_dir / "architecture.md"
+    if not doc_path.exists():
+        typer.echo(f"Architecture document not found: {doc_path}")
+        raise typer.Exit(1)
+
+    document = doc_path.read_text()
+    parts = run_id.split("-")
+    arch = Architecture(parts[0])
+    partition = PartitionCondition(parts[1])
+
+    from ate_arch.config import (
+        load_all_hard_constraints,
+        load_all_hidden_dependencies,
+        load_conflicts,
+    )
+    from ate_arch.scoring import save_result, save_scoring_detail, score_run
+    from ate_arch.simulator import AnthropicLLMClient
+
+    constraints = load_all_hard_constraints(SCENARIO_ID)
+    conflicts = load_conflicts(SCENARIO_ID)
+    dependencies = load_all_hidden_dependencies(SCENARIO_ID)
+
+    llm_client = AnthropicLLMClient()
+    scoring = score_run(
+        run_id,
+        document,
+        constraints,
+        conflicts,
+        dependencies,
+        llm_client,
+        architecture=arch,
+        partition_condition=partition,
+        model=scoring_model,
+    )
+
+    scores_dir = DATA_DIR / "scores"
+    run_result = scoring.to_run_result(arch, partition)
+    save_result(run_result, scores_dir)
+    save_scoring_detail(scoring, scores_dir)
+
+    from ate_arch.models import RubricWeights
+
+    comp = run_result.composite_score(RubricWeights())
+    typer.echo(f"Scored '{run_id}':")
+    typer.echo(f"  L1: {run_result.l1_constraint_discovery:.2f}")
+    typer.echo(f"  L2: {run_result.l2_conflict_identification:.2f}")
+    typer.echo(f"  L3: {run_result.l3_score():.2f}")
+    typer.echo(f"  L4: {run_result.l4_hidden_dependencies:.2f}")
+    typer.echo(f"  Composite: {comp:.2f}")
+
+    # Step 3: Comms analysis (if transcript provided)
+    if transcript:
+        from ate_arch.comms import analyze_session, save_comms_summary
+
+        t_path = Path(transcript)
+        if t_path.exists():
+            summary = analyze_session(run_id, t_path)
+            comms_dir = DATA_DIR / "comms"
+            save_comms_summary(summary, comms_dir)
+            typer.echo(
+                f"  Comms: {summary.total_messages} peer messages, "
+                f"indirect collab: {summary.has_indirect_collaboration}"
+            )
+        else:
+            typer.echo(f"  Transcript not found: {transcript}, skipping comms")
 
 
 if __name__ == "__main__":
