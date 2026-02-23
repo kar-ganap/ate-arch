@@ -74,10 +74,12 @@ ate-arch/
 
 ## Current State
 
-**Phase 1 complete.** Scenario B (Multi-Region Data Platform) fully defined:
-6 stakeholders with constraint sheets, 8 conflicts with optimal/acceptable
-resolutions, 4 hidden dependencies, 3 partition configs (A: 75/25, B: 50/50,
-C: 25/75), and ground truth reference architecture. 49 unit tests.
+**Phase 2 complete.** LLM-backed stakeholder simulator built:
+`StakeholderSimulator` (single stakeholder with system prompt + conversation
+history), `SimulatorPool` (routes interviews to correct simulator), `LLMClient`
+protocol with `AnthropicLLMClient` implementation. System prompts constructed
+from constraint sheets with guardrails (no volunteering, no leaking, trigger-based
+hidden deps). 4 new interview models. 98 unit tests (all mocked, zero real LLM calls).
 
 ## Phases
 
@@ -85,7 +87,7 @@ C: 25/75), and ground truth reference architecture. 49 unit tests.
 |-------|--------|--------|
 | 0 | `phase-0-scaffold` | Complete |
 | 1 | `phase-1-scenario` | Complete |
-| 2 | `phase-2-simulator` | Pending |
+| 2 | `phase-2-simulator` | Complete |
 | 3 | `phase-3-harness` | Pending |
 | 4 | `phase-4-rubric` | Pending |
 | 5 | `phase-5-pilot` | Pending |

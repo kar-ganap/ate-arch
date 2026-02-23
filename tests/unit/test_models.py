@@ -13,6 +13,10 @@ from ate_arch.models import (
     Constraint,
     ConstraintType,
     HiddenDependency,
+    InterviewMessage,
+    InterviewTranscript,
+    InterviewTurn,
+    MessageRole,
     Partition,
     PartitionCondition,
     ResolutionQuality,
@@ -246,3 +250,139 @@ class TestRunMetadata:
         )
         assert m.run_id == "control-a-1"
         assert m.wall_clock_minutes == 25.5
+
+
+# --- MessageRole ---
+
+
+class TestMessageRole:
+    def test_user_role(self) -> None:
+        assert MessageRole.USER == "user"
+
+    def test_assistant_role(self) -> None:
+        assert MessageRole.ASSISTANT == "assistant"
+
+
+# --- InterviewMessage ---
+
+
+class TestInterviewMessage:
+    def test_message_creation(self) -> None:
+        msg = InterviewMessage(
+            role=MessageRole.USER,
+            content="What are your encryption requirements?",
+            timestamp=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+        )
+        assert msg.role == MessageRole.USER
+        assert "encryption" in msg.content
+
+    def test_empty_content_raises(self) -> None:
+        with pytest.raises(ValidationError):
+            InterviewMessage(
+                role=MessageRole.USER,
+                content="",
+                timestamp=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+            )
+
+    def test_whitespace_content_raises(self) -> None:
+        with pytest.raises(ValidationError):
+            InterviewMessage(
+                role=MessageRole.ASSISTANT,
+                content="   ",
+                timestamp=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+            )
+
+
+# --- InterviewTurn ---
+
+
+class TestInterviewTurn:
+    def test_turn_creation(self) -> None:
+        turn = InterviewTurn(
+            question="What are your hard constraints?",
+            response="All data must be encrypted at rest using AES-256.",
+            turn_number=1,
+            timestamp=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+        )
+        assert turn.turn_number == 1
+        assert "encrypted" in turn.response
+
+    def test_turn_number_positive(self) -> None:
+        turn = InterviewTurn(
+            question="Follow-up question",
+            response="Follow-up answer",
+            turn_number=3,
+            timestamp=datetime(2026, 2, 22, 10, 5, 0, tzinfo=UTC),
+        )
+        assert turn.turn_number == 3
+
+
+# --- InterviewTranscript ---
+
+
+class TestInterviewTranscript:
+    def _make_turns(self, count: int) -> list[InterviewTurn]:
+        return [
+            InterviewTurn(
+                question=f"Question {i + 1}",
+                response=f"Response {i + 1}",
+                turn_number=i + 1,
+                timestamp=datetime(2026, 2, 22, 10, i, 0, tzinfo=UTC),
+            )
+            for i in range(count)
+        ]
+
+    def test_transcript_creation(self) -> None:
+        t = InterviewTranscript(
+            scenario_id="scenario_b",
+            stakeholder_id="security_officer",
+            turns=self._make_turns(2),
+            started_at=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+        )
+        assert t.scenario_id == "scenario_b"
+        assert t.stakeholder_id == "security_officer"
+        assert t.completed_at is None
+
+    def test_turn_count(self) -> None:
+        t = InterviewTranscript(
+            scenario_id="scenario_b",
+            stakeholder_id="compliance_lead",
+            turns=self._make_turns(3),
+            started_at=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+        )
+        assert t.turn_count == 3
+
+    def test_empty_transcript(self) -> None:
+        t = InterviewTranscript(
+            scenario_id="scenario_b",
+            stakeholder_id="platform_architect",
+            turns=[],
+            started_at=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+        )
+        assert t.turn_count == 0
+
+    def test_to_messages_flattens_turns(self) -> None:
+        t = InterviewTranscript(
+            scenario_id="scenario_b",
+            stakeholder_id="security_officer",
+            turns=self._make_turns(2),
+            started_at=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+        )
+        messages = t.to_messages()
+        assert len(messages) == 4  # 2 turns × 2 messages each
+        assert messages[0].role == MessageRole.USER
+        assert messages[0].content == "Question 1"
+        assert messages[1].role == MessageRole.ASSISTANT
+        assert messages[1].content == "Response 1"
+        assert messages[2].role == MessageRole.USER
+        assert messages[3].role == MessageRole.ASSISTANT
+
+    def test_completed_at(self) -> None:
+        t = InterviewTranscript(
+            scenario_id="scenario_b",
+            stakeholder_id="product_manager",
+            turns=self._make_turns(1),
+            started_at=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+            completed_at=datetime(2026, 2, 22, 10, 15, 0, tzinfo=UTC),
+        )
+        assert t.completed_at is not None
