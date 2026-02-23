@@ -162,3 +162,89 @@ class TestScoreCommand:
 
         assert result.exit_code == 0
         assert "Scored" in result.output
+
+
+class TestBatchScaffoldCommand:
+    def test_batch_scaffold_all(self, tmp_path: Path) -> None:
+        mock_paths = [tmp_path / f"run-{i}" for i in range(30)]
+        with patch("ate_arch.batch.batch_scaffold", return_value=mock_paths):
+            result = runner.invoke(app, ["batch-scaffold"])
+        assert result.exit_code == 0
+        assert "30" in result.output
+
+    def test_batch_scaffold_filtered(self, tmp_path: Path) -> None:
+        mock_paths = [tmp_path / "run-1"]
+        with patch("ate_arch.batch.batch_scaffold", return_value=mock_paths):
+            result = runner.invoke(
+                app,
+                ["batch-scaffold", "--architecture", "control", "--partition", "A"],
+            )
+        assert result.exit_code == 0
+        assert "1" in result.output
+
+
+class TestVerifyRunCommand:
+    def test_verify_structural_pass(self) -> None:
+        from ate_arch.batch import VerificationReport
+
+        report = VerificationReport(run_id="control-A-1", passed=True, issues=[])
+        with patch("ate_arch.batch.verify_run_structural", return_value=report):
+            result = runner.invoke(app, ["verify-run", "control-A-1", "--mode", "structural"])
+        assert result.exit_code == 0
+        assert "passed" in result.output.lower()
+
+    def test_verify_complete_fail(self) -> None:
+        from ate_arch.batch import VerificationIssue, VerificationReport
+
+        report = VerificationReport(
+            run_id="control-A-1",
+            passed=False,
+            issues=[
+                VerificationIssue(
+                    run_id="control-A-1",
+                    category="missing_file",
+                    detail="architecture.md not found",
+                )
+            ],
+        )
+        with patch("ate_arch.batch.verify_run_complete", return_value=report):
+            result = runner.invoke(app, ["verify-run", "control-A-1", "--mode", "complete"])
+        assert result.exit_code == 1
+        assert "architecture.md" in result.output
+
+
+class TestAnalyzeCommsCommand:
+    def test_analyze_with_messages(self, tmp_path: Path) -> None:
+        from ate_arch.comms import CommunicationSummary, PeerMessage
+
+        summary = CommunicationSummary(
+            run_id="treatment-A-1",
+            total_messages=2,
+            peer_messages=[
+                PeerMessage(sender="a1", recipient="a2", content_preview="hello"),
+                PeerMessage(sender="a2", recipient="a1", content_preview="hi"),
+            ],
+            unique_pairs=2,
+        )
+        transcript = tmp_path / "transcript.jsonl"
+        transcript.write_text("")
+        with patch("ate_arch.comms.analyze_session", return_value=summary):
+            result = runner.invoke(app, ["analyze-comms", "treatment-A-1", str(transcript)])
+        assert result.exit_code == 0
+        assert "2" in result.output  # total messages
+
+    def test_analyze_no_messages(self, tmp_path: Path) -> None:
+        from ate_arch.comms import CommunicationSummary
+
+        summary = CommunicationSummary(
+            run_id="control-A-1",
+            total_messages=0,
+            peer_messages=[],
+            unique_pairs=0,
+        )
+        transcript = tmp_path / "transcript.jsonl"
+        transcript.write_text("")
+        with patch("ate_arch.comms.analyze_session", return_value=summary):
+            result = runner.invoke(app, ["analyze-comms", "control-A-1", str(transcript)])
+        assert result.exit_code == 0
+        assert "0" in result.output

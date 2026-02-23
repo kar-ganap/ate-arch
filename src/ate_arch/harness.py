@@ -114,11 +114,12 @@ def get_opening_prompt(
     partition_condition: PartitionCondition,
     *,
     agent_num: int = 0,
+    run_num: int = 0,
 ) -> str:
     """Generate the opening prompt for a run."""
     scenario = load_scenario(SCENARIO_ID)
     partition = _get_partition(partition_condition)
-    run_id = make_run_id(architecture, partition_condition, 0)  # placeholder for prompt
+    run_id = make_run_id(architecture, partition_condition, run_num)
 
     if architecture == Architecture.CONTROL:
         return _control_prompt(partition, scenario, run_id)
@@ -179,20 +180,15 @@ Produce a markdown architecture document with:
 Save the final document as `architecture.md` in the current directory."""
 
 
-def _treatment_prompt(partition: Partition, scenario: object, run_id: str, agent_num: int) -> str:
+def _treatment_prompt(
+    partition: Partition, scenario: object, run_id: str, agent_num: int = 0,
+) -> str:
     """Generate the treatment (symmetric peers) opening prompt."""
-    if agent_num == 1:
-        my_stakeholders = partition.agent_1_stakeholders
-        peer_stakeholders = partition.agent_2_stakeholders
-    else:
-        my_stakeholders = partition.agent_2_stakeholders
-        peer_stakeholders = partition.agent_1_stakeholders
-
-    my_roster = _stakeholder_roster(my_stakeholders)
-    peer_count = len(peer_stakeholders)
+    agent_1_roster = _stakeholder_roster(partition.agent_1_stakeholders)
+    agent_2_roster = _stakeholder_roster(partition.agent_2_stakeholders)
 
     return f"""\
-You are one of two architects designing a Multi-Region Data Platform.
+You are leading the design of a Multi-Region Data Platform architecture.
 
 ## Scenario
 
@@ -202,34 +198,39 @@ latency, comply with regional regulations (GDPR), support real-time analytics, \
 and maintain a unified data model — all while satisfying competing stakeholder \
 requirements across security, compliance, operations, architecture, and product.
 
-## Your Assignment
+## Your Team
 
-You are responsible for interviewing these stakeholders:
+You have two peer agents. Each can only interview their assigned stakeholders, \
+but they can communicate directly with each other to share findings and \
+coordinate.
 
-{my_roster}
+**Agent 1 stakeholders:**
+{agent_1_roster}
 
-Your peer architect is interviewing {peer_count} other stakeholders. You should \
-share findings with your peer and coordinate to produce a single coherent \
-architecture document.
+**Agent 2 stakeholders:**
+{agent_2_roster}
 
-## How to Interview
+## Your Task
 
-Run this command to interview a stakeholder:
-```
-ate-arch interview {run_id} <stakeholder_id> "your questions here"
-```
+1. Use the Task tool to dispatch two peer agents to interview their assigned \
+stakeholders
+2. Agents should run: `ate-arch interview {run_id} <stakeholder_id> "your questions"`
+3. Agents should share findings with each other and coordinate directly — \
+especially on conflicts that span both sets of stakeholders
+4. Agents should collaboratively produce the final architecture document
 
-You can interview each stakeholder multiple times for follow-ups.
+## Important Rules
 
-## How to Collaborate
-
-Share important findings with your peer architect. Ask them about what they've \
-learned from their stakeholders. Coordinate on conflicts that span both sets \
-of stakeholders.
+- You CANNOT interview stakeholders directly. You MUST delegate to peer agents.
+- Each agent can only interview stakeholders in their assignment.
+- Agents should communicate with each other to share findings and resolve \
+cross-team conflicts. They do NOT need to go through you.
+- You may dispatch multiple rounds of follow-up interviews.
+- Focus on discovering conflicts between stakeholders and resolving them.
 
 ## Output Format
 
-Collaboratively produce a markdown architecture document with:
+Produce a markdown architecture document with:
 - System overview and high-level design
 - Component architecture
 - Data flow and control flow
@@ -259,7 +260,9 @@ def render_session_guide(
     agent_1_roster = _stakeholder_roster(partition.agent_1_stakeholders)
     agent_2_roster = _stakeholder_roster(partition.agent_2_stakeholders)
 
-    prompt = get_opening_prompt(architecture, partition_condition)
+    # Extract run number from run_id (e.g., "control-A-1" -> 1)
+    run_num = int(run_id.rsplit("-", 1)[1])
+    prompt = get_opening_prompt(architecture, partition_condition, run_num=run_num)
 
     env_note = ""
     if architecture == Architecture.CONTROL:

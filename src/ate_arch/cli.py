@@ -26,6 +26,13 @@ app = typer.Typer(name="ate-arch", help="Agent Teams Eval: Architecture Design")
 @app.callback()
 def main() -> None:
     """Agent Teams Eval — Architecture Design experiment tooling."""
+    from pathlib import Path
+
+    from dotenv import load_dotenv
+
+    # Load .env from project root (overrides shell env)
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    load_dotenv(env_path, override=True)
 
 
 @app.command()
@@ -222,6 +229,69 @@ def list_runs_cmd() -> None:
     typer.echo(f"Found {len(run_dirs)} run(s):")
     for name in run_dirs:
         typer.echo(f"  {name}")
+
+
+@app.command(name="batch-scaffold")
+def batch_scaffold_cmd(
+    architecture: Architecture | None = typer.Option(None, help="Filter by architecture"),
+    partition: PartitionCondition | None = typer.Option(None, help="Filter by partition"),
+) -> None:
+    """Scaffold multiple runs at once."""
+    from ate_arch.batch import batch_scaffold
+
+    archs = [architecture] if architecture else None
+    parts = [partition] if partition else None
+    paths = batch_scaffold(architectures=archs, partitions=parts)
+    typer.echo(f"Scaffolded {len(paths)} run(s).")
+    for p in paths:
+        typer.echo(f"  {p.name}")
+
+
+@app.command(name="verify-run")
+def verify_run_cmd(
+    run_id: str = typer.Argument(help="Run ID to verify"),
+    mode: str = typer.Option("structural", help="structural or complete"),
+) -> None:
+    """Verify a run's readiness or completeness."""
+    from ate_arch.batch import verify_run_complete, verify_run_structural
+
+    if mode == "complete":
+        report = verify_run_complete(run_id)
+    else:
+        report = verify_run_structural(run_id)
+
+    if report.passed:
+        typer.echo(f"Verification passed for '{run_id}'.")
+    else:
+        typer.echo(f"Verification failed for '{run_id}':")
+        for issue in report.issues:
+            typer.echo(f"  [{issue.category}] {issue.detail}")
+        raise typer.Exit(1)
+
+
+@app.command(name="analyze-comms")
+def analyze_comms_cmd(
+    run_id: str = typer.Argument(help="Run ID"),
+    transcript_path: str = typer.Argument(help="Path to JSONL transcript"),
+) -> None:
+    """Analyze inter-agent communication from a transcript."""
+    from pathlib import Path
+
+    from ate_arch.comms import analyze_session
+
+    path = Path(transcript_path)
+    if not path.exists():
+        typer.echo(f"Transcript not found: {path}")
+        raise typer.Exit(1)
+
+    summary = analyze_session(run_id, path)
+    typer.echo(f"Communication analysis for '{run_id}':")
+    typer.echo(f"  Total peer messages: {summary.total_messages}")
+    typer.echo(f"  Unique sender→recipient pairs: {summary.unique_pairs}")
+    if summary.peer_messages:
+        typer.echo("  Messages:")
+        for msg in summary.peer_messages:
+            typer.echo(f"    {msg.sender} → {msg.recipient}: {msg.content_preview[:80]}")
 
 
 if __name__ == "__main__":
