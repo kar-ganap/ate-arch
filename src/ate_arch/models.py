@@ -25,9 +25,9 @@ class Architecture(StrEnum):
 class PartitionCondition(StrEnum):
     """Conflict partition condition."""
 
-    A = "A"  # 100% within-partition
-    B = "B"  # 50/50 within/cross
-    C = "C"  # 100% cross-partition
+    A = "A"  # 75/25 within/cross (6 within, 2 cross)
+    B = "B"  # 50/50 within/cross (4 within, 4 cross)
+    C = "C"  # 25/75 within/cross (2 within, 6 cross)
 
 
 class ResolutionQuality(StrEnum):
