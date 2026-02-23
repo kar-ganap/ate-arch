@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Experiment data (raw data preserved locally, not in repo)
+data/transcripts/*
+data/outputs/*
+data/scores/*
+!data/transcripts/.gitkeep
+!data/outputs/.gitkeep
+!data/scores/.gitkeep
+
+# uv
+.python-version
+
+# mypy
+.mypy_cache/
+
+# pytest
+.pytest_cache/
