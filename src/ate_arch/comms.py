@@ -48,18 +48,40 @@ def parse_jsonl_file(path: Path) -> list[dict[str, Any]]:
     return entries
 
 
+def _iter_tool_uses(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Yield tool_use blocks from transcript entries.
+
+    Handles two formats:
+    - Nested: {"type": "assistant", "message": {"content": [{"type": "tool_use", ...}]}}
+    - Flat (legacy/test): {"type": "tool_use", "name": "...", "input": {...}}
+    """
+    tool_uses: list[dict[str, Any]] = []
+    for entry in entries:
+        # Flat format
+        if entry.get("type") == "tool_use":
+            tool_uses.append(entry)
+            continue
+        # Nested format — dig into message.content[]
+        message = entry.get("message", {})
+        content = message.get("content", [])
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                tool_uses.append(block)
+    return tool_uses
+
+
 def extract_peer_messages(entries: list[dict[str, Any]]) -> list[PeerMessage]:
     """Extract peer-to-peer messages from transcript entries."""
     messages: list[PeerMessage] = []
 
-    for entry in entries:
-        if entry.get("type") != "tool_use":
-            continue
-        name = entry.get("name", "")
+    for tool_use in _iter_tool_uses(entries):
+        name = tool_use.get("name", "")
         if name not in _PEER_TOOL_NAMES:
             continue
 
-        tool_input = entry.get("input", {})
+        tool_input = tool_use.get("input", {})
         recipient = tool_input.get("recipient", "")
         # SendMessage uses "content", message_peer uses "message"
         content = tool_input.get("content") or tool_input.get("message", "")
@@ -67,15 +89,15 @@ def extract_peer_messages(entries: list[dict[str, Any]]) -> list[PeerMessage]:
         # Truncate preview
         preview = content[:_PREVIEW_MAX] if content else ""
 
-        # Sender is not always available in the entry — use empty string
-        sender = entry.get("sender", "")
+        # Sender is not always available — use empty string
+        sender = tool_use.get("sender", "")
 
         messages.append(
             PeerMessage(
                 sender=sender,
                 recipient=recipient,
                 content_preview=preview,
-                timestamp=entry.get("timestamp"),
+                timestamp=tool_use.get("timestamp"),
             )
         )
 

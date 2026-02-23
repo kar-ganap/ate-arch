@@ -77,11 +77,10 @@ ate-arch/
 
 ## Current State
 
-**Phase 5 in progress.** Tooling complete: `batch.py` (batch scaffolding +
-verification), `comms.py` (JSONL transcript parsing + communication analysis),
-3 new CLI commands (`batch-scaffold`, `verify-run`, `analyze-comms`), execution
-guide. 251 unit tests (all mocked, zero real LLM calls). Live pilot runs
-(control-A-1, treatment-A-1, control-C-1) pending.
+**Phase 5 complete.** 253 unit tests. 4 pilot runs scored (control-A-1,
+treatment-A-1, control-C-1, treatment-C-1). Composite scores: 0.78–1.00. Zero
+peer-to-peer communication in treatment runs (coordinator-mediated only).
+L1/L2 ceiling at 1.00; L3/L4 carry the signal.
 
 ## Phases
 
@@ -92,7 +91,7 @@ guide. 251 unit tests (all mocked, zero real LLM calls). Live pilot runs
 | 2 | `phase-2-simulator` | Complete |
 | 3 | `phase-3-harness` | Complete |
 | 4 | `phase-4-rubric` | Complete |
-| 5 | `phase-5-pilot` | In Progress |
+| 5 | `phase-5-pilot` | Complete |
 | 6 | `phase-6-execution` | Pending |
 | 7 | `phase-7-analysis` | Pending |
 
@@ -100,3 +99,10 @@ guide. 251 unit tests (all mocked, zero real LLM calls). Live pilot runs
 
 - pyproject.toml: `dependencies` must come before `[project.scripts]` in the
   `[project]` table, otherwise hatchling fails with a confusing error
+- Claude Code JSONL transcripts nest tool calls in `message.content[]` arrays,
+  not at root level. comms.py `_iter_tool_uses()` handles both formats.
+- Agent Teams SendMessage calls are all coordinator → agent in practice. Zero
+  peer-to-peer messages observed across 3 ate experiments. Indirect
+  collaboration happens through shared file I/O (Read/Edit on same file).
+- Treatment prompt must be from lead-agent vantage (sees all stakeholders),
+  not from individual peer's perspective.

@@ -180,7 +180,9 @@ Produce a markdown architecture document with:
 Save the final document as `architecture.md` in the current directory."""
 
 
-def _treatment_prompt(partition: Partition, scenario: object, run_id: str, agent_num: int = 0) -> str:
+def _treatment_prompt(
+    partition: Partition, scenario: object, run_id: str, agent_num: int = 0,
+) -> str:
     """Generate the treatment (symmetric peers) opening prompt."""
     agent_1_roster = _stakeholder_roster(partition.agent_1_stakeholders)
     agent_2_roster = _stakeholder_roster(partition.agent_2_stakeholders)

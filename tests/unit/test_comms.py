@@ -104,15 +104,23 @@ class TestParseJsonlFile:
 
 
 class TestExtractPeerMessages:
-    def test_send_message_with_peer_recipient(self) -> None:
-        """SendMessage tool calls with peer recipients are extracted."""
+    def test_nested_send_message(self) -> None:
+        """SendMessage nested in assistant message content is extracted."""
         entries = [
             {
-                "type": "tool_use",
-                "name": "SendMessage",
-                "input": {
-                    "recipient": "agent-2",
-                    "content": "I found that security requires AES-256 encryption.",
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "SendMessage",
+                            "input": {
+                                "recipient": "agent-2",
+                                "content": "I found that security requires AES-256.",
+                            },
+                        },
+                    ],
                 },
             },
         ]
@@ -121,15 +129,23 @@ class TestExtractPeerMessages:
         assert messages[0].recipient == "agent-2"
         assert "AES-256" in messages[0].content_preview
 
-    def test_message_peer_tool(self) -> None:
-        """message_peer tool calls are extracted."""
+    def test_nested_message_peer(self) -> None:
+        """message_peer nested in assistant message content is extracted."""
         entries = [
             {
-                "type": "tool_use",
-                "name": "message_peer",
-                "input": {
-                    "recipient": "agent-1",
-                    "message": "Compliance requires GDPR data residency in EU region.",
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "message_peer",
+                            "input": {
+                                "recipient": "agent-1",
+                                "message": "GDPR data residency required.",
+                            },
+                        },
+                    ],
                 },
             },
         ]
@@ -138,16 +154,34 @@ class TestExtractPeerMessages:
         assert messages[0].recipient == "agent-1"
         assert "GDPR" in messages[0].content_preview
 
+    def test_flat_tool_use_still_works(self) -> None:
+        """Backward compat: flat tool_use entries are still extracted."""
+        entries = [
+            {
+                "type": "tool_use",
+                "name": "SendMessage",
+                "input": {
+                    "recipient": "agent-2",
+                    "content": "Flat format message",
+                },
+            },
+        ]
+        messages = extract_peer_messages(entries)
+        assert len(messages) == 1
+        assert messages[0].recipient == "agent-2"
+
     def test_non_peer_tool_calls_filtered(self) -> None:
         """Non-communication tool calls are not extracted."""
         entries = [
-            {"type": "tool_use", "name": "Bash", "input": {"command": "ls"}},
-            {"type": "tool_use", "name": "Read", "input": {"path": "file.txt"}},
-            {"type": "tool_use", "name": "Write", "input": {"path": "out.md"}},
             {
-                "type": "tool_use",
-                "name": "Task",
-                "input": {"prompt": "Interview stakeholder"},
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {"type": "tool_use", "name": "Bash", "input": {"command": "ls"}},
+                        {"type": "tool_use", "name": "Read", "input": {"path": "f.txt"}},
+                    ],
+                },
             },
         ]
         messages = extract_peer_messages(entries)
@@ -158,37 +192,82 @@ class TestExtractPeerMessages:
         long_content = "x" * 500
         entries = [
             {
-                "type": "tool_use",
-                "name": "SendMessage",
-                "input": {"recipient": "agent-2", "content": long_content},
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "SendMessage",
+                            "input": {"recipient": "agent-2", "content": long_content},
+                        },
+                    ],
+                },
             },
         ]
         messages = extract_peer_messages(entries)
         assert len(messages[0].content_preview) == 200
 
-    def test_multiple_messages(self) -> None:
-        """Multiple peer messages are all extracted."""
+    def test_multiple_messages_across_entries(self) -> None:
+        """Multiple peer messages across entries are all extracted."""
         entries = [
             {
-                "type": "tool_use",
-                "name": "SendMessage",
-                "input": {"recipient": "agent-2", "content": "First message"},
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "SendMessage",
+                            "input": {"recipient": "agent-2", "content": "First"},
+                        },
+                        {
+                            "type": "tool_use",
+                            "name": "Bash",
+                            "input": {"command": "echo hi"},
+                        },
+                    ],
+                },
             },
-            {"type": "tool_use", "name": "Bash", "input": {"command": "echo hi"}},
             {
-                "type": "tool_use",
-                "name": "SendMessage",
-                "input": {"recipient": "agent-1", "content": "Reply"},
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "SendMessage",
+                            "input": {"recipient": "agent-1", "content": "Reply"},
+                        },
+                    ],
+                },
             },
         ]
         messages = extract_peer_messages(entries)
         assert len(messages) == 2
 
-    def test_entries_without_tool_use_type_ignored(self) -> None:
-        """Entries that are not tool_use type are skipped."""
+    def test_entries_without_tool_use_ignored(self) -> None:
+        """Entries with no tool_use content blocks are skipped."""
         entries = [
-            {"type": "message", "role": "assistant", "content": "Thinking..."},
-            {"type": "result", "output": "Done"},
+            {
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": "Thinking..."}],
+                },
+            },
+            {"type": "user", "message": {"role": "user", "content": "hello"}},
+        ]
+        messages = extract_peer_messages(entries)
+        assert messages == []
+
+    def test_mixed_nested_and_string_content(self) -> None:
+        """Entries where message.content is a string (not list) are handled."""
+        entries = [
+            {
+                "type": "assistant",
+                "message": {"role": "assistant", "content": "Just text, no tools"},
+            },
         ]
         messages = extract_peer_messages(entries)
         assert messages == []
@@ -202,8 +281,18 @@ class TestAnalyzeSession:
         """Session with no peer messages."""
         jsonl = tmp_path / "transcript.jsonl"
         lines = [
-            json.dumps({"type": "tool_use", "name": "Bash", "input": {"command": "ls"}}),
-            json.dumps({"type": "message", "role": "user", "content": "hello"}),
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "content": [
+                            {"type": "tool_use", "name": "Bash", "input": {"command": "ls"}},
+                        ],
+                    },
+                }
+            ),
+            json.dumps({"type": "user", "message": {"role": "user", "content": "hello"}}),
         ]
         jsonl.write_text("\n".join(lines))
 
@@ -216,55 +305,58 @@ class TestAnalyzeSession:
     def test_multiple_peer_messages(self, tmp_path: Path) -> None:
         """Session with multiple peer messages from different pairs."""
         jsonl = tmp_path / "transcript.jsonl"
+
+        def _msg(recipient: str, content: str) -> str:
+            return json.dumps(
+                {
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "SendMessage",
+                                "input": {"recipient": recipient, "content": content},
+                            },
+                        ],
+                    },
+                }
+            )
+
         lines = [
-            json.dumps(
-                {
-                    "type": "tool_use",
-                    "name": "SendMessage",
-                    "input": {"recipient": "agent-2", "content": "From agent 1"},
-                }
-            ),
-            json.dumps(
-                {
-                    "type": "tool_use",
-                    "name": "SendMessage",
-                    "input": {"recipient": "agent-1", "content": "Reply from agent 2"},
-                }
-            ),
-            json.dumps(
-                {
-                    "type": "tool_use",
-                    "name": "SendMessage",
-                    "input": {"recipient": "agent-2", "content": "Follow-up from agent 1"},
-                }
-            ),
+            _msg("agent-2", "From agent 1"),
+            _msg("agent-1", "Reply from agent 2"),
+            _msg("agent-2", "Follow-up from agent 1"),
         ]
         jsonl.write_text("\n".join(lines))
 
         summary = analyze_session("treatment-A-1", jsonl)
         assert summary.total_messages == 3
         assert len(summary.peer_messages) == 3
-        assert summary.unique_pairs == 2  # agent-?->agent-2, agent-?->agent-1
+        assert summary.unique_pairs == 2  # ->agent-2, ->agent-1
 
     def test_unique_pairs_counting(self, tmp_path: Path) -> None:
-        """Unique pairs counts distinct sender→recipient combinations."""
+        """Unique pairs counts distinct sender->recipient combinations."""
         jsonl = tmp_path / "transcript.jsonl"
-        lines = [
-            json.dumps(
+
+        def _msg(recipient: str, content: str) -> str:
+            return json.dumps(
                 {
-                    "type": "tool_use",
-                    "name": "SendMessage",
-                    "input": {"recipient": "agent-2", "content": "msg1"},
+                    "type": "assistant",
+                    "message": {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "SendMessage",
+                                "input": {"recipient": recipient, "content": content},
+                            },
+                        ],
+                    },
                 }
-            ),
-            json.dumps(
-                {
-                    "type": "tool_use",
-                    "name": "SendMessage",
-                    "input": {"recipient": "agent-2", "content": "msg2"},
-                }
-            ),
-        ]
+            )
+
+        lines = [_msg("agent-2", "msg1"), _msg("agent-2", "msg2")]
         jsonl.write_text("\n".join(lines))
 
         summary = analyze_session("treatment-B-1", jsonl)
