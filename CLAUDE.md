@@ -74,12 +74,14 @@ ate-arch/
 
 ## Current State
 
-**Phase 2 complete.** LLM-backed stakeholder simulator built:
-`StakeholderSimulator` (single stakeholder with system prompt + conversation
-history), `SimulatorPool` (routes interviews to correct simulator), `LLMClient`
-protocol with `AnthropicLLMClient` implementation. System prompts constructed
-from constraint sheets with guardrails (no volunteering, no leaking, trigger-based
-hidden deps). 4 new interview models. 98 unit tests (all mocked, zero real LLM calls).
+**Phase 3 complete.** Execution harness built: `scaffold_run()` creates run
+directories with session guides, metadata templates, and interview state files.
+`ate-arch interview` CLI command enables agents to interview stakeholders during
+runs via CLI-per-invocation with file-based state persistence (`initial_turns`
+on `StakeholderSimulator`). Opening prompts differentiate control (hub-and-spoke,
+must delegate via Task tool) from treatment (symmetric peers, coordinate with
+peer). Session guides are copy-paste ready. Preflight checks validate env.
+143 unit tests (all mocked, zero real LLM calls).
 
 ## Phases
 
@@ -88,7 +90,7 @@ hidden deps). 4 new interview models. 98 unit tests (all mocked, zero real LLM c
 | 0 | `phase-0-scaffold` | Complete |
 | 1 | `phase-1-scenario` | Complete |
 | 2 | `phase-2-simulator` | Complete |
-| 3 | `phase-3-harness` | Pending |
+| 3 | `phase-3-harness` | Complete |
 | 4 | `phase-4-rubric` | Pending |
 | 5 | `phase-5-pilot` | Pending |
 | 6 | `phase-6-execution` | Pending |

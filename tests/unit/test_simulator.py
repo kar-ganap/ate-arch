@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -11,6 +12,7 @@ from ate_arch.models import (
     Constraint,
     ConstraintType,
     HiddenDependency,
+    InterviewTurn,
     Stakeholder,
 )
 from ate_arch.simulator import (
@@ -502,6 +504,86 @@ class TestSimulatorPool:
         )
         pool.interview("security_officer", "Q1")
         pool.interview("security_officer", "Q2")
+        transcript = pool.get_transcript("security_officer")
+        assert transcript.turn_count == 2
+
+
+# --- Initial turns (state hydration) ---
+
+
+class TestInitialTurns:
+    def _make_prior_turns(self) -> list[InterviewTurn]:
+        return [
+            InterviewTurn(
+                question="Prior Q1",
+                response="Prior A1",
+                turn_number=1,
+                timestamp=datetime(2026, 2, 22, 10, 0, 0, tzinfo=UTC),
+            ),
+        ]
+
+    def test_simulator_with_initial_turns(
+        self, security_officer: Stakeholder, fake_llm: FakeLLMClient
+    ) -> None:
+        prior = self._make_prior_turns()
+        sim = StakeholderSimulator(
+            stakeholder=security_officer,
+            scenario_id=SCENARIO_ID,
+            llm_client=fake_llm,
+            initial_turns=prior,
+        )
+        assert sim.turn_count == 1
+        # New interview continues from turn 2
+        sim.interview("Follow-up question")
+        assert sim.turn_count == 2
+
+    def test_initial_turns_included_in_messages(
+        self, security_officer: Stakeholder, fake_llm: FakeLLMClient
+    ) -> None:
+        prior = self._make_prior_turns()
+        sim = StakeholderSimulator(
+            stakeholder=security_officer,
+            scenario_id=SCENARIO_ID,
+            llm_client=fake_llm,
+            initial_turns=prior,
+        )
+        sim.interview("New question")
+        # The LLM call should include prior history + new question
+        messages = fake_llm.calls[0]["messages"]
+        assert len(messages) == 3  # Prior Q1, Prior A1, New question
+        assert messages[0]["content"] == "Prior Q1"
+        assert messages[1]["content"] == "Prior A1"
+        assert messages[2]["content"] == "New question"
+
+    def test_transcript_from_hydrated_simulator(
+        self, security_officer: Stakeholder, fake_llm: FakeLLMClient
+    ) -> None:
+        prior = self._make_prior_turns()
+        sim = StakeholderSimulator(
+            stakeholder=security_officer,
+            scenario_id=SCENARIO_ID,
+            llm_client=fake_llm,
+            initial_turns=prior,
+        )
+        sim.interview("New Q")
+        transcript = sim.get_transcript()
+        assert transcript.turn_count == 2
+        assert transcript.turns[0].question == "Prior Q1"
+        assert transcript.turns[1].question == "New Q"
+
+    def test_pool_with_initial_state(self, fake_llm: FakeLLMClient) -> None:
+        prior = self._make_prior_turns()
+        pool = SimulatorPool(
+            scenario_id=SCENARIO_ID,
+            llm_client=fake_llm,
+            stakeholder_ids=["security_officer"],
+            initial_state={"security_officer": prior},
+        )
+        # The pool should have the prior turn
+        transcript = pool.get_transcript("security_officer")
+        assert transcript.turn_count == 1
+        # New interview continues
+        pool.interview("security_officer", "Follow-up")
         transcript = pool.get_transcript("security_officer")
         assert transcript.turn_count == 2
 
