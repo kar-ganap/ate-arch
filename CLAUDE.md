@@ -78,15 +78,18 @@ ate-arch/
 
 ## Current State
 
-**Phase 6 in progress (tooling complete, execution pending).** 297 unit tests.
+**Phase 6 in progress (tooling complete, execution pending).** 330 unit tests.
 4 pilot runs scored + retroactive comms analysis. Phase 6 added: indirect
 collaboration tracking (FileOperation/IndirectCollaboration), relay transparency
-metric (RelayEvent/RelayAnalysis), comms persistence, `postprocess` CLI command,
-enhanced `list-runs` with scored/complete/scaffolded status. Retroactive analysis
-on all 4 pilots confirms: zero indirect collaboration detected (transcript
-opacity — all file ops appear coordinator-level in Agent Teams), zero relay
-events (Task tool returns "Spawned successfully", not agent reports). 16 new
-runs pending.
+metric (RelayEvent/RelayAnalysis), comms persistence, `postprocess` CLI command
+(auto-extracts wall_clock from transcript timestamps, interview_count from
+interview_state.json), enhanced `list-runs` with per-model composite scores,
+`rescore` command for dual-model scoring. Score files now support model slug
+naming: `{run_id}_{slug}.json` (e.g., `control-A-1_haiku.json`). Backward
+compatible with legacy `{run_id}.json`. Retroactive analysis on all 4 pilots
+confirms: zero indirect collaboration detected (transcript opacity — all file
+ops appear coordinator-level in Agent Teams), zero relay events (Task tool
+returns "Spawned successfully", not agent reports). 16 new runs pending.
 
 ## Phases
 

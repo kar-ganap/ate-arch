@@ -24,6 +24,7 @@ from ate_arch.scoring import (
     ResolutionJudgment,
     ScoringResult,
     load_result,
+    model_slug,
     save_result,
     save_scoring_detail,
     score_l1,
@@ -651,3 +652,97 @@ class TestPersistence:
         path = save_scoring_detail(scoring, tmp_path)
         assert path.exists()
         assert path.name == "control-A-1_detail.json"
+
+
+# --- model_slug ---
+
+
+class TestModelSlug:
+    def test_haiku(self) -> None:
+        assert model_slug("claude-haiku-4-5-20251001") == "haiku"
+
+    def test_sonnet(self) -> None:
+        assert model_slug("claude-sonnet-4-6") == "sonnet"
+
+    def test_opus(self) -> None:
+        assert model_slug("claude-opus-4-6") == "opus"
+
+    def test_unknown_model(self) -> None:
+        """Unknown model extracts second segment."""
+        assert model_slug("claude-gemma-3") == "gemma"
+
+
+# --- Persistence with model slug ---
+
+
+class TestPersistenceWithModel:
+    def test_save_result_with_model(self, tmp_path: Path) -> None:
+        """Score file includes model slug in filename."""
+        llm = FakeLLMClient(["FOUND: y", "FOUND: y", "OPTIMAL: y", "FOUND: y"])
+        scoring = score_run(
+            "control-A-1",
+            SAMPLE_DOCUMENT,
+            [_make_constraint()],
+            [_make_conflict()],
+            [_make_dependency()],
+            llm,
+            architecture=Architecture.CONTROL,
+            partition_condition=PartitionCondition.A,
+        )
+        rr = scoring.to_run_result(Architecture.CONTROL, PartitionCondition.A)
+        path = save_result(rr, tmp_path, scoring_model="claude-haiku-4-5-20251001")
+        assert path.name == "control-A-1_haiku.json"
+
+    def test_save_result_without_model_backward_compat(self, tmp_path: Path) -> None:
+        """No model param gives original filename (backward compat)."""
+        llm = FakeLLMClient(["FOUND: y", "FOUND: y", "OPTIMAL: y", "FOUND: y"])
+        scoring = score_run(
+            "control-A-1",
+            SAMPLE_DOCUMENT,
+            [_make_constraint()],
+            [_make_conflict()],
+            [_make_dependency()],
+            llm,
+            architecture=Architecture.CONTROL,
+            partition_condition=PartitionCondition.A,
+        )
+        rr = scoring.to_run_result(Architecture.CONTROL, PartitionCondition.A)
+        path = save_result(rr, tmp_path)
+        assert path.name == "control-A-1.json"
+
+    def test_save_scoring_detail_with_model(self, tmp_path: Path) -> None:
+        llm = FakeLLMClient(["FOUND: y", "FOUND: y", "OPTIMAL: y", "FOUND: y"])
+        scoring = score_run(
+            "control-A-1",
+            SAMPLE_DOCUMENT,
+            [_make_constraint()],
+            [_make_conflict()],
+            [_make_dependency()],
+            llm,
+            architecture=Architecture.CONTROL,
+            partition_condition=PartitionCondition.A,
+        )
+        path = save_scoring_detail(
+            scoring, tmp_path, scoring_model="claude-sonnet-4-6"
+        )
+        assert path.name == "control-A-1_sonnet_detail.json"
+
+    def test_load_result_with_model_round_trip(self, tmp_path: Path) -> None:
+        llm = FakeLLMClient(["FOUND: y", "FOUND: y", "OPTIMAL: y", "FOUND: y"])
+        scoring = score_run(
+            "control-A-1",
+            SAMPLE_DOCUMENT,
+            [_make_constraint()],
+            [_make_conflict()],
+            [_make_dependency()],
+            llm,
+            architecture=Architecture.CONTROL,
+            partition_condition=PartitionCondition.A,
+        )
+        original = scoring.to_run_result(Architecture.CONTROL, PartitionCondition.A)
+        save_result(original, tmp_path, scoring_model="claude-haiku-4-5-20251001")
+        loaded = load_result(
+            "control-A-1", tmp_path, scoring_model="claude-haiku-4-5-20251001"
+        )
+        assert loaded.run_id == original.run_id
+        assert loaded.l1_constraint_discovery == original.l1_constraint_discovery

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -342,29 +343,89 @@ class TestAnalyzeCommsCommand:
 
 
 class TestEnhancedListRuns:
-    def test_scored_status(self, tmp_path: Path) -> None:
-        """Scored runs show [scored] and composite score."""
+    @staticmethod
+    def _make_score_json(run_id: str, l1: float = 1.0, l4: float = 0.75) -> str:
+        """Create minimal valid RunResult JSON."""
         import json
 
+        return json.dumps(
+            {
+                "run_id": run_id,
+                "architecture": run_id.split("-")[0],
+                "partition_condition": run_id.split("-")[1],
+                "l1_constraint_discovery": l1,
+                "l2_conflict_identification": 1.0,
+                "l3_conflict_resolution": {},
+                "l4_hidden_dependencies": l4,
+            }
+        )
+
+    def test_scored_status_with_model_slug(self, tmp_path: Path) -> None:
+        """Scored runs show [scored] with model slug and composite."""
         runs_dir = tmp_path / "runs"
         (runs_dir / "control-A-1").mkdir(parents=True)
         scores_dir = tmp_path / "scores"
         scores_dir.mkdir()
-        score_data = {
-            "run_id": "control-A-1",
-            "architecture": "control",
-            "partition_condition": "A",
-            "l1_constraint_discovery": 1.0,
-            "l2_conflict_identification": 1.0,
-            "l3_resolutions": [],
-            "l4_hidden_dependencies": 0.75,
-        }
-        (scores_dir / "control-A-1.json").write_text(json.dumps(score_data))
+        (scores_dir / "control-A-1_haiku.json").write_text(
+            self._make_score_json("control-A-1")
+        )
 
         with patch("ate_arch.cli.DATA_DIR", tmp_path):
             result = runner.invoke(app, ["list-runs"])
         assert result.exit_code == 0
-        assert "scored" in result.output.lower()
+        assert "[scored]" in result.output
+        assert "haiku=" in result.output
+
+    def test_multi_model_scored(self, tmp_path: Path) -> None:
+        """Runs scored with multiple models show all model scores."""
+        runs_dir = tmp_path / "runs"
+        (runs_dir / "control-A-1").mkdir(parents=True)
+        scores_dir = tmp_path / "scores"
+        scores_dir.mkdir()
+        (scores_dir / "control-A-1_haiku.json").write_text(
+            self._make_score_json("control-A-1")
+        )
+        (scores_dir / "control-A-1_sonnet.json").write_text(
+            self._make_score_json("control-A-1", l4=0.5)
+        )
+        # Also create a detail file that should be excluded
+        (scores_dir / "control-A-1_haiku_detail.json").write_text("{}")
+
+        with patch("ate_arch.cli.DATA_DIR", tmp_path):
+            result = runner.invoke(app, ["list-runs"])
+        assert result.exit_code == 0
+        assert "haiku=" in result.output
+        assert "sonnet=" in result.output
+        # Detail file should not create a separate entry
+        assert "detail" not in result.output.lower()
+
+    def test_backward_compat_no_slug(self, tmp_path: Path) -> None:
+        """Score files without model slug show as 'default'."""
+        runs_dir = tmp_path / "runs"
+        (runs_dir / "control-A-1").mkdir(parents=True)
+        scores_dir = tmp_path / "scores"
+        scores_dir.mkdir()
+        (scores_dir / "control-A-1.json").write_text(
+            self._make_score_json("control-A-1")
+        )
+
+        with patch("ate_arch.cli.DATA_DIR", tmp_path):
+            result = runner.invoke(app, ["list-runs"])
+        assert result.exit_code == 0
+        assert "[scored]" in result.output
+        assert "default=" in result.output
+
+    def test_complete_status(self, tmp_path: Path) -> None:
+        """Runs with architecture.md but no scores show [complete]."""
+        runs_dir = tmp_path / "runs"
+        run_dir = runs_dir / "control-A-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "architecture.md").write_text("# Test")
+
+        with patch("ate_arch.cli.DATA_DIR", tmp_path):
+            result = runner.invoke(app, ["list-runs"])
+        assert result.exit_code == 0
+        assert "[complete]" in result.output
 
     def test_scaffolded_status(self, tmp_path: Path) -> None:
         """Scaffolded-only runs show [scaffolded]."""
@@ -374,17 +435,191 @@ class TestEnhancedListRuns:
         with patch("ate_arch.cli.DATA_DIR", tmp_path):
             result = runner.invoke(app, ["list-runs"])
         assert result.exit_code == 0
-        assert "scaffolded" in result.output.lower()
+        assert "[scaffolded]" in result.output
+
+
+class TestRescoreCommand:
+    def test_rescore_happy_path(self, tmp_path: Path) -> None:
+        """rescore scores completed runs and saves with model slug."""
+        runs_dir = tmp_path / "runs"
+        run_dir = runs_dir / "control-A-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "architecture.md").write_text("# Test architecture")
+
+        mock_scoring = MagicMock()
+        mock_run_result = MagicMock()
+        mock_run_result.composite_score.return_value = 0.85
+        mock_scoring.to_run_result.return_value = mock_run_result
+
+        with (
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+            patch("ate_arch.scoring.score_run", return_value=mock_scoring),
+            patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
+            patch("ate_arch.config.load_conflicts", return_value=[]),
+            patch("ate_arch.config.load_all_hidden_dependencies", return_value=[]),
+            patch("ate_arch.simulator.AnthropicLLMClient"),
+            patch("ate_arch.scoring.save_result") as mock_save,
+            patch("ate_arch.scoring.save_scoring_detail"),
+        ):
+            result = runner.invoke(
+                app,
+                ["rescore", "--scoring-model", "claude-sonnet-4-6"],
+            )
+
+        assert result.exit_code == 0
+        assert "control-A-1" in result.output
+        assert "0.85" in result.output
+        mock_save.assert_called_once()
+        # Verify scoring_model passed through
+        _, kwargs = mock_save.call_args
+        assert kwargs["scoring_model"] == "claude-sonnet-4-6"
+
+    def test_rescore_skips_without_architecture(self, tmp_path: Path) -> None:
+        """rescore skips runs that don't have architecture.md."""
+        runs_dir = tmp_path / "runs"
+        (runs_dir / "control-A-1").mkdir(parents=True)
+        # No architecture.md
+
+        with patch("ate_arch.cli.DATA_DIR", tmp_path):
+            result = runner.invoke(
+                app,
+                ["rescore", "--scoring-model", "claude-sonnet-4-6"],
+            )
+
+        assert result.exit_code == 0
+        assert "No completed runs" in result.output
+
+    def test_rescore_specific_run_ids(self, tmp_path: Path) -> None:
+        """rescore with --run-ids only processes specified runs."""
+        runs_dir = tmp_path / "runs"
+        for rid in ["control-A-1", "control-A-2"]:
+            d = runs_dir / rid
+            d.mkdir(parents=True)
+            (d / "architecture.md").write_text("# Test")
+
+        mock_scoring = MagicMock()
+        mock_run_result = MagicMock()
+        mock_run_result.composite_score.return_value = 0.90
+        mock_scoring.to_run_result.return_value = mock_run_result
+
+        with (
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+            patch("ate_arch.scoring.score_run", return_value=mock_scoring),
+            patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
+            patch("ate_arch.config.load_conflicts", return_value=[]),
+            patch("ate_arch.config.load_all_hidden_dependencies", return_value=[]),
+            patch("ate_arch.simulator.AnthropicLLMClient"),
+            patch("ate_arch.scoring.save_result"),
+            patch("ate_arch.scoring.save_scoring_detail"),
+        ):
+            result = runner.invoke(
+                app,
+                [
+                    "rescore",
+                    "--scoring-model",
+                    "claude-sonnet-4-6",
+                    "--run-ids",
+                    "control-A-1",
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "control-A-1" in result.output
+        # Only 1 run scored, not 2
+        assert "1 run(s)" in result.output
 
 
 class TestPostprocessCommand:
-    def test_happy_path(self, tmp_path: Path) -> None:
-        """postprocess chains metadata update + verify + score + comms."""
+    def _make_transcript(self, tmp_path: Path) -> Path:
+        """Create a minimal JSONL transcript with timestamps."""
+        import json
+
+        transcript = tmp_path / "transcript.jsonl"
+        lines = [
+            json.dumps(
+                {"type": "user", "timestamp": "2026-02-23T06:30:00.000Z"}
+            ),
+            json.dumps(
+                {"type": "assistant", "timestamp": "2026-02-23T06:40:00.000Z"}
+            ),
+        ]
+        transcript.write_text("\n".join(lines) + "\n")
+        return transcript
+
+    def test_auto_extract(self, tmp_path: Path) -> None:
+        """postprocess auto-extracts wall_clock and interview_count."""
         run_dir = tmp_path / "runs" / "control-A-1"
         run_dir.mkdir(parents=True)
         (run_dir / "architecture.md").write_text("# Test")
-        transcript = tmp_path / "transcript.jsonl"
-        transcript.write_text("")
+        transcript = self._make_transcript(tmp_path)
+
+        mock_metadata = MagicMock()
+        mock_metadata.started_at = None
+
+        mock_scoring = MagicMock()
+        mock_run_result = MagicMock()
+        mock_run_result.l1_constraint_discovery = 1.0
+        mock_run_result.l2_conflict_identification = 1.0
+        mock_run_result.l3_score.return_value = 0.75
+        mock_run_result.l4_hidden_dependencies = 0.75
+        mock_run_result.composite_score.return_value = 0.88
+        mock_scoring.to_run_result.return_value = mock_run_result
+
+        from ate_arch.comms import CommunicationSummary
+
+        comms_summary = CommunicationSummary(
+            run_id="control-A-1",
+            total_messages=0,
+            peer_messages=[],
+            unique_pairs=0,
+        )
+
+        with (
+            patch("ate_arch.cli.get_run_dir", return_value=run_dir),
+            patch("ate_arch.cli.load_metadata", return_value=mock_metadata),
+            patch("ate_arch.cli.save_metadata") as mock_save,
+            patch("ate_arch.cli.DATA_DIR", tmp_path),
+            patch("ate_arch.scoring.score_run", return_value=mock_scoring),
+            patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
+            patch("ate_arch.config.load_conflicts", return_value=[]),
+            patch(
+                "ate_arch.config.load_all_hidden_dependencies", return_value=[]
+            ),
+            patch("ate_arch.simulator.AnthropicLLMClient"),
+            patch("ate_arch.scoring.save_result"),
+            patch("ate_arch.scoring.save_scoring_detail"),
+            patch(
+                "ate_arch.comms.analyze_session", return_value=comms_summary
+            ),
+            patch(
+                "ate_arch.harness.count_interviews", return_value=12
+            ),
+            patch(
+                "ate_arch.harness.extract_timestamps_from_transcript",
+                return_value=(
+                    datetime(2026, 2, 23, 6, 30, tzinfo=UTC),
+                    10.0,
+                ),
+            ),
+        ):
+            result = runner.invoke(
+                app,
+                ["postprocess", "control-A-1", str(transcript)],
+            )
+
+        assert result.exit_code == 0
+        assert "composite" in result.output.lower()
+        # Auto-extracted values applied to metadata
+        assert mock_metadata.wall_clock_minutes == 10.0
+        assert mock_metadata.interview_count == 12
+        mock_save.assert_called_once()
+
+    def test_manual_override(self, tmp_path: Path) -> None:
+        """Manual --wall-clock and --interview-count override auto-extract."""
+        run_dir = tmp_path / "runs" / "control-A-1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "architecture.md").write_text("# Test")
+        transcript = self._make_transcript(tmp_path)
 
         mock_metadata = MagicMock()
         mock_metadata.started_at = None
@@ -415,79 +650,45 @@ class TestPostprocessCommand:
             patch("ate_arch.scoring.score_run", return_value=mock_scoring),
             patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
             patch("ate_arch.config.load_conflicts", return_value=[]),
-            patch("ate_arch.config.load_all_hidden_dependencies", return_value=[]),
+            patch(
+                "ate_arch.config.load_all_hidden_dependencies", return_value=[]
+            ),
             patch("ate_arch.simulator.AnthropicLLMClient"),
             patch("ate_arch.scoring.save_result"),
             patch("ate_arch.scoring.save_scoring_detail"),
-            patch("ate_arch.comms.analyze_session", return_value=comms_summary),
+            patch(
+                "ate_arch.comms.analyze_session", return_value=comms_summary
+            ),
+            patch(
+                "ate_arch.harness.extract_timestamps_from_transcript",
+                return_value=(
+                    datetime(2026, 2, 23, 6, 30, tzinfo=UTC),
+                    10.0,
+                ),
+            ),
         ):
             result = runner.invoke(
                 app,
                 [
                     "postprocess",
                     "control-A-1",
-                    "--wall-clock",
-                    "12.3",
-                    "--interview-count",
-                    "16",
-                    "--transcript",
                     str(transcript),
-                ],
-            )
-
-        assert result.exit_code == 0
-        assert "composite" in result.output.lower()
-
-    def test_no_transcript_skips_comms(self, tmp_path: Path) -> None:
-        """postprocess without transcript skips comms analysis."""
-        run_dir = tmp_path / "runs" / "control-A-1"
-        run_dir.mkdir(parents=True)
-        (run_dir / "architecture.md").write_text("# Test")
-
-        mock_metadata = MagicMock()
-        mock_metadata.started_at = None
-
-        mock_scoring = MagicMock()
-        mock_run_result = MagicMock()
-        mock_run_result.l1_constraint_discovery = 1.0
-        mock_run_result.l2_conflict_identification = 1.0
-        mock_run_result.l3_score.return_value = 0.75
-        mock_run_result.l4_hidden_dependencies = 0.75
-        mock_run_result.composite_score.return_value = 0.88
-        mock_scoring.to_run_result.return_value = mock_run_result
-
-        with (
-            patch("ate_arch.cli.get_run_dir", return_value=run_dir),
-            patch("ate_arch.cli.load_metadata", return_value=mock_metadata),
-            patch("ate_arch.cli.save_metadata"),
-            patch("ate_arch.cli.DATA_DIR", tmp_path),
-            patch("ate_arch.scoring.score_run", return_value=mock_scoring),
-            patch("ate_arch.config.load_all_hard_constraints", return_value=[]),
-            patch("ate_arch.config.load_conflicts", return_value=[]),
-            patch("ate_arch.config.load_all_hidden_dependencies", return_value=[]),
-            patch("ate_arch.simulator.AnthropicLLMClient"),
-            patch("ate_arch.scoring.save_result"),
-            patch("ate_arch.scoring.save_scoring_detail"),
-        ):
-            result = runner.invoke(
-                app,
-                [
-                    "postprocess",
-                    "control-A-1",
                     "--wall-clock",
-                    "12.3",
+                    "15.5",
                     "--interview-count",
-                    "16",
+                    "20",
                 ],
             )
 
         assert result.exit_code == 0
-        assert "composite" in result.output.lower()
+        assert mock_metadata.wall_clock_minutes == 15.5
+        assert mock_metadata.interview_count == 20
 
     def test_missing_architecture_fails(self, tmp_path: Path) -> None:
         """postprocess fails if architecture.md is missing."""
         run_dir = tmp_path / "runs" / "control-A-1"
         run_dir.mkdir(parents=True)
+        transcript = self._make_transcript(tmp_path)
 
         mock_metadata = MagicMock()
         mock_metadata.started_at = None
@@ -496,17 +697,18 @@ class TestPostprocessCommand:
             patch("ate_arch.cli.get_run_dir", return_value=run_dir),
             patch("ate_arch.cli.load_metadata", return_value=mock_metadata),
             patch("ate_arch.cli.save_metadata"),
+            patch(
+                "ate_arch.harness.extract_timestamps_from_transcript",
+                return_value=(
+                    datetime(2026, 2, 23, 6, 30, tzinfo=UTC),
+                    10.0,
+                ),
+            ),
+            patch("ate_arch.harness.count_interviews", return_value=0),
         ):
             result = runner.invoke(
                 app,
-                [
-                    "postprocess",
-                    "control-A-1",
-                    "--wall-clock",
-                    "10",
-                    "--interview-count",
-                    "6",
-                ],
+                ["postprocess", "control-A-1", str(transcript)],
             )
 
         assert result.exit_code == 1
