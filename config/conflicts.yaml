@@ -1,0 +1,165 @@
+scenario: scenario_b
+conflicts:
+  - id: C1
+    description: "Encryption vendor lock-in vs open-source audit transparency"
+    stakeholder_a: security_officer
+    constraint_a: P-S1-1
+    stakeholder_b: compliance_lead
+    constraint_b: P-S2-2
+    optimal_resolution: >
+      Use open-source encryption libraries (OpenSSL/libsodium) for all data
+      encryption, satisfying both the compliance team's audit transparency
+      requirements and the security team's encryption standards. Reserve HSMs
+      only for root key management where open-source alternatives are less
+      mature. This eliminates vendor lock-in for the bulk of encryption while
+      maintaining hardware security where it matters most.
+    acceptable_resolutions:
+      - >
+        Use a commercial encryption stack with source-available licensing and
+        contractual audit rights. Satisfies audit requirements but introduces
+        vendor dependency.
+
+  - id: C2
+    description: "Zero-trust IAM authentication latency vs EU query latency SLA"
+    stakeholder_a: security_officer
+    constraint_a: HC-S1-3
+    stakeholder_b: regional_ops_eu
+    constraint_b: HC-S3-2
+    optimal_resolution: >
+      Deploy regional IAM caches in each region with pre-authenticated session
+      tokens. Initial authentication goes through centralized IAM with MFA,
+      then issues short-lived (15-minute) regional tokens that bypass central
+      verification. Token validation happens locally in < 5ms, keeping query
+      latency well within the 200ms p99 budget. Central IAM audit trail is
+      maintained via async token issuance logs.
+    acceptable_resolutions:
+      - >
+        Deploy full IAM replicas per region with eventual consistency (< 30s
+        lag). Reduces latency but increases infrastructure cost and creates a
+        window where revoked credentials may still work.
+      - >
+        Exempt read-only analytics queries from MFA requirement while keeping
+        MFA for writes and admin operations. Reduces security posture for reads
+        but maintains p99 latency.
+
+  - id: C3
+    description: "GDPR data deletion timeline vs high availability SLA"
+    stakeholder_a: compliance_lead
+    constraint_a: HC-S2-3
+    stakeholder_b: regional_ops_eu
+    constraint_b: HC-S3-1
+    optimal_resolution: >
+      Implement an async deletion queue with priority scheduling. Deletion
+      requests are acknowledged immediately and processed in background with
+      priority over non-essential batch jobs. Deletions that affect hot data
+      are executed during low-traffic windows within the 72h deadline. The
+      system enters a brief degraded-read mode (stale reads allowed) only
+      during bulk deletion events affecting > 1% of records, preserving the
+      99.95% availability SLA for normal operations.
+    acceptable_resolutions:
+      - >
+        Process all deletions synchronously during a nightly maintenance window
+        (4 AM CET). Simple but creates a hard dependency on the maintenance
+        window and may violate the 72h deadline for requests submitted just
+        after the window.
+
+  - id: C4
+    description: "GDPR pseudonymization pipeline vs APAC batch processing windows"
+    stakeholder_a: compliance_lead
+    constraint_a: HC-S2-2
+    stakeholder_b: regional_ops_apac
+    constraint_b: HC-S4-4
+    optimal_resolution: >
+      Perform pseudonymization at data ingestion time within each region, so
+      data is already pseudonymized before any cross-region transfer is needed.
+      For APAC batch processing, pre-compute pseudonymized views that are ready
+      for cross-region queries without runtime pseudonymization overhead. This
+      eliminates the conflict because pseudonymization doesn't consume batch
+      processing time.
+    acceptable_resolutions:
+      - >
+        Schedule pseudonymization as the first step of the APAC batch pipeline,
+        allocating 20% of the batch window for compliance processing. Workable
+        but reduces effective batch processing capacity by 20%.
+
+  - id: C5
+    description: "EU-only failover isolation vs unified data model"
+    stakeholder_a: regional_ops_eu
+    constraint_a: HC-S3-3
+    stakeholder_b: platform_architect
+    constraint_b: HC-S5-1
+    optimal_resolution: >
+      Split the architecture into a shared control plane (schema definitions,
+      metadata, lineage) and region-autonomous data planes. The EU data plane
+      is fully self-contained with local replicas of the control plane metadata.
+      The unified data model is maintained at the schema level (single source of
+      truth in the control plane), but each region's data plane can operate
+      independently. EU failover stays within EU because the data plane is
+      autonomous; the unified model is preserved because schema governance
+      remains centralized.
+    acceptable_resolutions:
+      - >
+        Maintain region-specific schema versions that are kept in sync via
+        automated migration tooling. Preserves EU isolation but introduces
+        the risk of schema drift between regions.
+
+  - id: C6
+    description: "APAC regional autonomy vs shared metadata service"
+    stakeholder_a: regional_ops_apac
+    constraint_a: HC-S4-1
+    stakeholder_b: platform_architect
+    constraint_b: HC-S5-3
+    optimal_resolution: >
+      Deploy multi-primary metadata replication with regional write-affinity.
+      Each region has a full metadata replica that accepts writes locally.
+      Conflict resolution uses last-writer-wins with region priority for
+      region-specific metadata. APAC operates autonomously for reads and local
+      writes; cross-region metadata changes propagate asynchronously. If the
+      cross-region link fails, APAC continues operating with its local metadata
+      replica — no single point of failure outside the region.
+    acceptable_resolutions:
+      - >
+        Read-only metadata replicas per region with async sync to a US-primary
+        metadata service. APAC can read metadata locally but must route writes
+        to the primary, creating a cross-region dependency for metadata updates.
+
+  - id: C7
+    description: "APAC burst traffic priority vs real-time analytics dashboard"
+    stakeholder_a: regional_ops_apac
+    constraint_a: HC-S4-3
+    stakeholder_b: product_manager
+    constraint_b: HC-S6-1
+    optimal_resolution: >
+      Implement priority queueing with reserved capacity. APAC burst traffic
+      gets high-priority queue access with guaranteed minimum compute/network
+      allocation. Analytics dashboard queries run on reserved (isolated) compute
+      that is not affected by burst traffic. During extreme burst events
+      (> 10x), analytics may use slightly stale data (up to 30s) but remains
+      operational. Resource isolation prevents either workload from starving
+      the other.
+    acceptable_resolutions:
+      - >
+        Dedicated analytics cluster separate from the operational data path.
+        Analytics queries never compete with burst traffic but the dashboard
+        sees data with a replication lag (typically 5-15 seconds).
+
+  - id: C8
+    description: "Backward-compatible schemas vs rapid feature iteration"
+    stakeholder_a: platform_architect
+    constraint_a: HC-S5-2
+    stakeholder_b: product_manager
+    constraint_b: HC-S6-4
+    optimal_resolution: >
+      Implement a schema registry with versioned views. The base data model
+      evolves through backward-compatible additions only (new columns, new
+      tables). Analysts and dashboards query versioned views that present the
+      data in the format they expect. When the PM needs a new feature that
+      would require a breaking schema change, a new view version is created
+      instead. Old view versions are maintained for backward compatibility.
+      This decouples the release cadence (PM can ship features in < 30 days)
+      from schema stability (Architect maintains backward compatibility).
+    acceptable_resolutions:
+      - >
+        Feature flags at the data layer — new features write to new columns/tables
+        while old features continue using existing schema. Achieves rapid iteration
+        but increases schema complexity over time.

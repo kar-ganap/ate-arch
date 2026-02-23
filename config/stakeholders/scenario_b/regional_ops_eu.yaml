@@ -1,0 +1,31 @@
+id: regional_ops_eu
+name: "Sophie Müller"
+role: "Regional Operations Manager (EU)"
+constraints:
+  - id: HC-S3-1
+    description: "99.95% availability SLA for EU customers"
+    type: hard
+  - id: HC-S3-2
+    description: "Maximum 200ms p99 query latency for EU users"
+    type: hard
+  - id: HC-S3-3
+    description: "Failover must stay within EU only — no cross-region failover to US or APAC"
+    type: hard
+  - id: P-S3-1
+    description: "Prefer Frankfurt as primary EU datacenter due to existing vendor relationships"
+    type: preference
+  - id: P-S3-2
+    description: "Prefer managed services to reduce operational burden"
+    type: preference
+hidden_dependencies:
+  - id: HD3
+    description: >
+      The EU monitoring and observability tools currently in use do not support
+      querying encrypted-at-rest metrics stores. If all data is encrypted at rest
+      as the Security Officer requires, the EU ops team would need either a
+      separate unencrypted metrics pipeline or new monitoring tools that support
+      encrypted storage. This has cost and complexity implications that affect
+      the security architecture.
+    trigger: "asked about observability, monitoring setup, or metrics infrastructure"
+    related_stakeholders:
+      - security_officer

@@ -1,0 +1,23 @@
+id: regional_ops_apac
+name: "Kenji Tanaka"
+role: "Regional Operations Manager (APAC)"
+constraints:
+  - id: HC-S4-1
+    description: "99.9% availability SLA for APAC customers"
+    type: hard
+  - id: HC-S4-2
+    description: "Maximum 300ms p99 query latency for APAC users"
+    type: hard
+  - id: HC-S4-3
+    description: "Must handle 10x burst traffic patterns during APAC business hours"
+    type: hard
+  - id: HC-S4-4
+    description: "Batch data processing jobs must complete within local APAC business hours"
+    type: hard
+  - id: P-S4-1
+    description: "Prefer Tokyo as primary APAC datacenter"
+    type: preference
+  - id: P-S4-2
+    description: "Prefer auto-scaling over provisioned capacity for cost efficiency"
+    type: preference
+hidden_dependencies: []

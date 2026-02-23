@@ -1,0 +1,25 @@
+id: scenario_b
+name: "Multi-Region Data Platform"
+description: >
+  DataFlow Corp needs a unified data analytics platform spanning 3 geographic
+  regions (US, EU, APAC). The platform must serve regional customers with low
+  latency, comply with regional regulations (GDPR), support real-time analytics,
+  and maintain a unified data model — all while satisfying competing stakeholder
+  requirements across security, compliance, operations, architecture, and product.
+stakeholder_ids:
+  - security_officer
+  - compliance_lead
+  - regional_ops_eu
+  - regional_ops_apac
+  - platform_architect
+  - product_manager
+conflict_ids:
+  - C1
+  - C2
+  - C3
+  - C4
+  - C5
+  - C6
+  - C7
+  - C8
+hidden_dependency_count: 4
