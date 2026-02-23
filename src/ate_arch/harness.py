@@ -114,11 +114,12 @@ def get_opening_prompt(
     partition_condition: PartitionCondition,
     *,
     agent_num: int = 0,
+    run_num: int = 0,
 ) -> str:
     """Generate the opening prompt for a run."""
     scenario = load_scenario(SCENARIO_ID)
     partition = _get_partition(partition_condition)
-    run_id = make_run_id(architecture, partition_condition, 0)  # placeholder for prompt
+    run_id = make_run_id(architecture, partition_condition, run_num)
 
     if architecture == Architecture.CONTROL:
         return _control_prompt(partition, scenario, run_id)
@@ -259,7 +260,9 @@ def render_session_guide(
     agent_1_roster = _stakeholder_roster(partition.agent_1_stakeholders)
     agent_2_roster = _stakeholder_roster(partition.agent_2_stakeholders)
 
-    prompt = get_opening_prompt(architecture, partition_condition)
+    # Extract run number from run_id (e.g., "control-A-1" -> 1)
+    run_num = int(run_id.rsplit("-", 1)[1])
+    prompt = get_opening_prompt(architecture, partition_condition, run_num=run_num)
 
     env_note = ""
     if architecture == Architecture.CONTROL:
