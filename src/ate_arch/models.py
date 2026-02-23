@@ -226,10 +226,10 @@ class RunMetadata(BaseModel):
     run_id: str
     architecture: Architecture
     partition_condition: PartitionCondition
-    claude_code_version: str
-    model: str
-    started_at: datetime
-    wall_clock_minutes: float
+    claude_code_version: str = ""
+    model: str = ""
+    started_at: datetime | None = None
+    wall_clock_minutes: float = 0.0
     token_count: int | None = None
     interview_count: int | None = None
     notes: str | None = None

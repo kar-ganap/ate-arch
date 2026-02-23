@@ -113,6 +113,7 @@ class StakeholderSimulator:
         model: str = "claude-haiku-4-5-20251001",
         temperature: float = 0.15,
         max_tokens: int = 1024,
+        initial_turns: list[InterviewTurn] | None = None,
     ) -> None:
         self._stakeholder = stakeholder
         self._scenario_id = scenario_id
@@ -121,8 +122,8 @@ class StakeholderSimulator:
         self._temperature = temperature
         self._max_tokens = max_tokens
         self._system_prompt = self._build_system_prompt()
-        self._turns: list[InterviewTurn] = []
-        self._started_at: datetime | None = None
+        self._turns: list[InterviewTurn] = list(initial_turns) if initial_turns else []
+        self._started_at: datetime | None = self._turns[0].timestamp if self._turns else None
 
     @property
     def stakeholder_id(self) -> str:
@@ -222,6 +223,7 @@ class SimulatorPool:
         temperature: float = 0.15,
         max_tokens: int = 1024,
         stakeholder_ids: list[str] | None = None,
+        initial_state: dict[str, list[InterviewTurn]] | None = None,
     ) -> None:
         if stakeholder_ids is not None:
             stakeholders = [load_stakeholder(scenario_id, sid) for sid in stakeholder_ids]
@@ -230,6 +232,7 @@ class SimulatorPool:
 
         self._simulators: dict[str, StakeholderSimulator] = {}
         for s in stakeholders:
+            turns = (initial_state or {}).get(s.id)
             self._simulators[s.id] = StakeholderSimulator(
                 stakeholder=s,
                 scenario_id=scenario_id,
@@ -237,6 +240,7 @@ class SimulatorPool:
                 model=model,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                initial_turns=turns,
             )
 
     @property
