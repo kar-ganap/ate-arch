@@ -1,0 +1,33 @@
+id: compliance_lead
+name: "Marcus Chen"
+role: "Head of Regulatory Compliance"
+constraints:
+  - id: HC-S2-1
+    description: "EU customer data must reside within EU borders at all times (GDPR data residency)"
+    type: hard
+  - id: HC-S2-2
+    description: "PII must be pseudonymized before any cross-region data transfer"
+    type: hard
+  - id: HC-S2-3
+    description: "Data deletion requests must be fulfilled within 72 hours (GDPR right to erasure)"
+    type: hard
+  - id: HC-S2-4
+    description: "Annual third-party security audits required for all data handling systems"
+    type: hard
+  - id: P-S2-1
+    description: "Prefer automated compliance checking over manual processes"
+    type: preference
+  - id: P-S2-2
+    description: "Prefer open-source tools where possible for audit transparency"
+    type: preference
+hidden_dependencies:
+  - id: HD2
+    description: >
+      The company has a legacy data classification system that the APAC operations
+      team has built their SLAs around. The classification service's response
+      times are baked into APAC's batch processing windows. Any migration to a
+      new classification system must preserve those response time guarantees, or
+      APAC's batch processing SLAs will be violated.
+    trigger: "asked about data classification approach or migration strategy"
+    related_stakeholders:
+      - regional_ops_apac

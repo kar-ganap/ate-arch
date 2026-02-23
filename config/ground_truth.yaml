@@ -1,0 +1,90 @@
+scenario: scenario_b
+description: >
+  Reference optimal architecture for the Multi-Region Data Platform scenario.
+  This defines the best-case resolution for each conflict and the ideal handling
+  of each hidden dependency. Used as the ground truth for rubric scoring.
+
+architecture_overview: >
+  Three-region (US, EU, APAC) data platform with region-autonomous data planes
+  and a shared control plane. Each region operates independently for data
+  processing and serving, with cross-region coordination limited to metadata
+  sync and aggregated analytics. The architecture uses event-driven patterns
+  for loose coupling, Kubernetes for orchestration, and a schema registry
+  for data model governance.
+
+conflict_resolutions:
+  C1:
+    resolution: >
+      Open-source encryption (OpenSSL/libsodium) for all data encryption.
+      HSMs reserved for root key management only. Eliminates vendor lock-in
+      while maintaining audit transparency.
+    quality: optimal
+  C2:
+    resolution: >
+      Regional IAM caches with pre-authenticated session tokens (15-min TTL).
+      Central IAM for initial auth + MFA, regional token validation in < 5ms.
+      Async audit trail via token issuance logs.
+    quality: optimal
+  C3:
+    resolution: >
+      Async deletion queue with priority scheduling. Background processing
+      within 72h. Brief degraded-read mode only during bulk deletions affecting
+      > 1% of records.
+    quality: optimal
+  C4:
+    resolution: >
+      Pseudonymization at ingestion time within each region. Pre-computed
+      pseudonymized views for cross-region queries. Zero runtime overhead
+      during APAC batch processing.
+    quality: optimal
+  C5:
+    resolution: >
+      Shared control plane (schema, metadata, lineage) with region-autonomous
+      data planes. EU data plane is self-contained with local control plane
+      replicas. Unified model at schema level, independent operation per region.
+    quality: optimal
+  C6:
+    resolution: >
+      Multi-primary metadata replication with regional write-affinity.
+      Last-writer-wins conflict resolution with region priority for local
+      metadata. APAC operates autonomously; cross-region sync is async.
+    quality: optimal
+  C7:
+    resolution: >
+      Priority queueing with reserved analytics capacity. Burst traffic gets
+      high-priority queue. Analytics on isolated compute. During extreme
+      burst (> 10x), analytics uses slightly stale data (up to 30s).
+    quality: optimal
+  C8:
+    resolution: >
+      Schema registry with versioned views. Base model evolves via
+      backward-compatible additions. Analysts query versioned views.
+      New features create new view versions instead of breaking changes.
+    quality: optimal
+
+hidden_dependency_handling:
+  HD1:
+    description: >
+      Key rotation dual-key windows. Caching layer supports graceful key
+      transition — serves content encrypted with old key while new encryptions
+      use new key. Cache invalidation coordinated with key rotation schedule.
+    discovered: true
+  HD2:
+    description: >
+      Legacy classification system response times preserved. Migration uses
+      a compatibility layer that maintains existing API response time guarantees.
+      APAC batch SLAs unaffected during and after migration.
+    discovered: true
+  HD3:
+    description: >
+      Separate unencrypted metrics pipeline for EU monitoring tools. Metrics
+      data (non-PII) exempted from encryption-at-rest requirement via data
+      classification. Security team approves the exemption for operational
+      metrics only.
+    discovered: true
+  HD4:
+    description: >
+      Resource isolation between analytics queries and APAC burst traffic.
+      Dedicated compute pools with guaranteed minimum allocations. Priority
+      queueing ensures burst traffic doesn't starve analytics and vice versa.
+    discovered: true

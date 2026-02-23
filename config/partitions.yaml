@@ -1,0 +1,67 @@
+scenario: scenario_b
+partitions:
+  # Condition A: Governance cluster + Builder cluster
+  # 6 within-partition, 2 cross-partition (75/25)
+  - condition: A
+    agent_1_stakeholders:
+      - security_officer
+      - compliance_lead
+      - regional_ops_eu
+    agent_2_stakeholders:
+      - regional_ops_apac
+      - platform_architect
+      - product_manager
+    within_partition_conflicts:
+      - C1  # security_officer ↔ compliance_lead
+      - C2  # security_officer ↔ regional_ops_eu
+      - C3  # compliance_lead ↔ regional_ops_eu
+      - C6  # regional_ops_apac ↔ platform_architect
+      - C7  # regional_ops_apac ↔ product_manager
+      - C8  # platform_architect ↔ product_manager
+    cross_partition_conflicts:
+      - C4  # compliance_lead ↔ regional_ops_apac
+      - C5  # regional_ops_eu ↔ platform_architect
+
+  # Condition B: Mixed assignment
+  # 4 within-partition, 4 cross-partition (50/50)
+  - condition: B
+    agent_1_stakeholders:
+      - security_officer
+      - compliance_lead
+      - regional_ops_apac
+    agent_2_stakeholders:
+      - regional_ops_eu
+      - platform_architect
+      - product_manager
+    within_partition_conflicts:
+      - C1  # security_officer ↔ compliance_lead
+      - C4  # compliance_lead ↔ regional_ops_apac
+      - C5  # regional_ops_eu ↔ platform_architect
+      - C8  # platform_architect ↔ product_manager
+    cross_partition_conflicts:
+      - C2  # security_officer ↔ regional_ops_eu
+      - C3  # compliance_lead ↔ regional_ops_eu
+      - C6  # regional_ops_apac ↔ platform_architect
+      - C7  # regional_ops_apac ↔ product_manager
+
+  # Condition C: Maximum cross-partition
+  # 2 within-partition, 6 cross-partition (25/75)
+  - condition: C
+    agent_1_stakeholders:
+      - security_officer
+      - compliance_lead
+      - platform_architect
+    agent_2_stakeholders:
+      - regional_ops_eu
+      - regional_ops_apac
+      - product_manager
+    within_partition_conflicts:
+      - C1  # security_officer ↔ compliance_lead
+      - C7  # regional_ops_apac ↔ product_manager
+    cross_partition_conflicts:
+      - C2  # security_officer ↔ regional_ops_eu
+      - C3  # compliance_lead ↔ regional_ops_eu
+      - C4  # compliance_lead ↔ regional_ops_apac
+      - C5  # regional_ops_eu ↔ platform_architect
+      - C6  # regional_ops_apac ↔ platform_architect
+      - C8  # platform_architect ↔ product_manager

@@ -1,0 +1,33 @@
+id: security_officer
+name: "Elena Vasquez"
+role: "Chief Security Officer"
+constraints:
+  - id: HC-S1-1
+    description: "All data must be encrypted at rest (AES-256) and in transit (TLS 1.3)"
+    type: hard
+  - id: HC-S1-2
+    description: "Zero-trust architecture — no implicit trust between services, all communication authenticated"
+    type: hard
+  - id: HC-S1-3
+    description: "All access must go through centralized IAM with multi-factor authentication"
+    type: hard
+  - id: HC-S1-4
+    description: "Tamper-proof audit logs retained for 7 years"
+    type: hard
+  - id: P-S1-1
+    description: "Prefer single-vendor security stack for consistency and reduced integration risk"
+    type: preference
+  - id: P-S1-2
+    description: "Prefer hardware security modules (HSMs) for cryptographic key management"
+    type: preference
+hidden_dependencies:
+  - id: HD1
+    description: >
+      Key rotation must happen without downtime, which requires dual-key windows
+      during transition periods. The caching layer must support graceful key
+      transition — serving content encrypted with the old key while new
+      encryptions use the new key. This has implications for how the Platform
+      Architect designs the caching and storage layers.
+    trigger: "asked about key rotation lifecycle or key management operations"
+    related_stakeholders:
+      - platform_architect

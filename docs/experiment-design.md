@@ -100,16 +100,26 @@ experimental framework. Details TBD in Phase 1 if needed.
 
 ## 5. Partition Conditions
 
-Stakeholders are partitioned between two agents. Conflicts are distributed as:
+Stakeholders are partitioned between two agents. The conflict graph forms two
+natural clusters (Governance: {CSO, Compliance, EU Ops} and Builder: {APAC Ops,
+Architect, PM}) connected by 2 bridge conflicts. With 8 conflicts among 6
+stakeholders in 3+3 partitions, mathematical constraints limit the achievable
+within/cross ratios.
 
-| Condition | Within-partition | Cross-partition | Expected team advantage |
-|-----------|-----------------|-----------------|------------------------|
-| **A** | 100% | 0% | Minimal (control baseline) |
-| **B** | 50% | 50% | Moderate |
-| **C** | 0% | 100% | Maximum |
+| Condition | Partition | Within | Cross | Ratio | Expected team advantage |
+|-----------|-----------|--------|-------|-------|------------------------|
+| **A** | {CSO, Comp, EU Ops} \| {APAC, Arch, PM} | 6 | 2 | 75/25 | Minimal |
+| **B** | {CSO, Comp, APAC} \| {EU Ops, Arch, PM} | 4 | 4 | 50/50 | Moderate |
+| **C** | {CSO, Comp, Arch} \| {EU Ops, APAC, PM} | 2 | 6 | 25/75 | Maximum |
 
-Condition A serves as an internal control: if teams show no advantage when all
-conflicts are within-partition, the experimental setup is working correctly.
+The gradient (75% → 50% → 25% within-partition) provides a monotonic decrease
+in within-partition conflicts. The absolute increase from A to C is 4 additional
+cross-partition conflicts (from 2 to 6), a 3x increase in cross-boundary
+information dependency.
+
+Condition A serves as an internal control: with most conflicts within-partition,
+team communication has limited value. If teams show advantage in A, it suggests
+the advantage comes from the architecture itself, not from information sharing.
 
 ## 6. Experimental Matrix
 
@@ -220,3 +230,4 @@ Agents produce a structured architecture document containing:
 | Date | Change | Rationale |
 |------|--------|-----------|
 | 2026-02-22 | Initial design | Phase 0 scaffolding. Successor to ate and ate-features. |
+| 2026-02-22 | Phase 1: Scenario B design, partition math correction | 6 stakeholders, 8 conflicts, 4 hidden dependencies, 3 partition configs. Partition ratios corrected from idealized 100/0, 50/50, 0/100 to achievable 75/25, 50/50, 25/75 based on conflict graph analysis. |

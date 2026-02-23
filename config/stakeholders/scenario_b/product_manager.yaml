@@ -1,0 +1,33 @@
+id: product_manager
+name: "Aisha Patel"
+role: "Product Manager"
+constraints:
+  - id: HC-S6-1
+    description: "Real-time cross-region analytics dashboard with less than 5-second refresh"
+    type: hard
+  - id: HC-S6-2
+    description: "Self-service data access for analysts — no DBA gatekeeping required"
+    type: hard
+  - id: HC-S6-3
+    description: "Support at least 3 data source types: SQL databases, streaming, and file-based"
+    type: hard
+  - id: HC-S6-4
+    description: "Feature parity across all regions within 30 days of initial release"
+    type: hard
+  - id: P-S6-1
+    description: "Prefer SQL-based interface for analysts to minimize learning curve"
+    type: preference
+  - id: P-S6-2
+    description: "Prefer incremental rollouts with canary releases per region"
+    type: preference
+hidden_dependencies:
+  - id: HD4
+    description: >
+      The real-time cross-region analytics dashboard generates significant query
+      load that competes directly with APAC's burst traffic for compute and
+      network resources. During APAC peak business hours, the analytics queries
+      and burst traffic create resource contention that could degrade both
+      services unless priority queueing or resource isolation is implemented.
+    trigger: "asked about cross-region query patterns or dashboard resource usage"
+    related_stakeholders:
+      - regional_ops_apac

@@ -1,0 +1,26 @@
+id: platform_architect
+name: "David Okonkwo"
+role: "Platform Architect"
+constraints:
+  - id: HC-S5-1
+    description: "Single unified data model across all regions — no regional schema forks"
+    type: hard
+  - id: HC-S5-2
+    description: "All schema changes must be backward-compatible — no breaking changes"
+    type: hard
+  - id: HC-S5-3
+    description: "Shared metadata service for data lineage and cataloging across regions"
+    type: hard
+  - id: HC-S5-4
+    description: "All services must expose Prometheus-compatible metrics"
+    type: hard
+  - id: P-S5-1
+    description: "Prefer Kubernetes for container orchestration (team has deep expertise)"
+    type: preference
+  - id: P-S5-2
+    description: "Prefer event-driven architecture for loose coupling between services"
+    type: preference
+  - id: P-S5-3
+    description: "Prefer PostgreSQL for metadata storage"
+    type: preference
+hidden_dependencies: []

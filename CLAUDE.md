@@ -74,15 +74,17 @@ ate-arch/
 
 ## Current State
 
-**Phase 0 complete.** Project scaffold created with Pydantic models, config
-loader, CLI skeleton, and initial unit tests.
+**Phase 1 complete.** Scenario B (Multi-Region Data Platform) fully defined:
+6 stakeholders with constraint sheets, 8 conflicts with optimal/acceptable
+resolutions, 4 hidden dependencies, 3 partition configs (A: 75/25, B: 50/50,
+C: 25/75), and ground truth reference architecture. 49 unit tests.
 
 ## Phases
 
 | Phase | Branch | Status |
 |-------|--------|--------|
-| 0 | `phase-0-scaffold` | In Progress |
-| 1 | `phase-1-scenario` | Pending |
+| 0 | `phase-0-scaffold` | Complete |
+| 1 | `phase-1-scenario` | Complete |
 | 2 | `phase-2-simulator` | Pending |
 | 3 | `phase-3-harness` | Pending |
 | 4 | `phase-4-rubric` | Pending |
