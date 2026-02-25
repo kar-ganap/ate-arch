@@ -115,10 +115,14 @@ def get_metric(cell, metric):
 
 
 def sig_label(p):
-    if p < 0.001: return "***"
-    if p < 0.01: return "**"
-    if p < 0.05: return "*"
-    if p < 0.10: return "†"
+    if p < 0.001:
+        return "***"
+    if p < 0.01:
+        return "**"
+    if p < 0.05:
+        return "*"
+    if p < 0.10:
+        return "†"
     return "ns"
 
 
@@ -146,8 +150,12 @@ for metric in ["composite", "l2", "l3", "l4"]:
     u, p = mwu(ctrl, treat)
     d = cohens_d(ctrl, treat)
     sig = sig_label(p)
-    print(f"  {METRIC_LABELS[metric]:<16} Control={mean(ctrl):.2f}(±{sd(ctrl):.2f})  Treatment={mean(treat):.2f}(±{sd(treat):.2f})  "
-          f"U={u:.1f}  p={p:.4f} {sig}  d={d:+.2f}")
+    print(
+        f"  {METRIC_LABELS[metric]:<16}"
+        f" Control={mean(ctrl):.2f}(±{sd(ctrl):.2f})"
+        f"  Treatment={mean(treat):.2f}(±{sd(treat):.2f})"
+        f"  U={u:.1f}  p={p:.4f} {sig}  d={d:+.2f}"
+    )
 
 # ──────────────────────────────────────────────────────────────────────
 # 2. MAIN EFFECT: PARTITION
@@ -162,8 +170,12 @@ for metric in ["composite", "l2", "l3", "l4"]:
     u, p = mwu(part_a, part_c)
     d = cohens_d(part_a, part_c)
     sig = sig_label(p)
-    print(f"  {METRIC_LABELS[metric]:<16} Partition-A={mean(part_a):.2f}(±{sd(part_a):.2f})  Partition-C={mean(part_c):.2f}(±{sd(part_c):.2f})  "
-          f"U={u:.1f}  p={p:.4f} {sig}  d={d:+.2f}")
+    print(
+        f"  {METRIC_LABELS[metric]:<16}"
+        f" A={mean(part_a):.2f}(±{sd(part_a):.2f})"
+        f"  C={mean(part_c):.2f}(±{sd(part_c):.2f})"
+        f"  U={u:.1f}  p={p:.4f} {sig}  d={d:+.2f}"
+    )
 
 # ──────────────────────────────────────────────────────────────────────
 # 3. PAIRWISE CELL COMPARISONS
@@ -181,7 +193,11 @@ for metric in ["composite", "l3"]:
         u, p = mwu(v1, v2)
         d = cohens_d(v1, v2)
         sig = sig_label(p)
-        print(f"    {c1:<13} vs {c2:<13}  {mean(v1):.2f} vs {mean(v2):.2f}  U={u:.1f}  p={p:.4f} {sig}  d={d:+.2f}")
+        print(
+            f"    {c1:<13} vs {c2:<13}"
+            f"  {mean(v1):.2f} vs {mean(v2):.2f}"
+            f"  U={u:.1f}  p={p:.4f} {sig}  d={d:+.2f}"
+        )
 
 # ──────────────────────────────────────────────────────────────────────
 # 4. INTERACTION EFFECT
@@ -205,8 +221,14 @@ for metric in ["composite", "l2", "l3"]:
     sig = sig_label(p_int)
 
     print(f"\n  {METRIC_LABELS[metric]}:")
-    print(f"    Treatment effect in Partition A: {effect_a:+.2f}  (Treatment-A {mean(ta):.2f} - Control-A {mean(ca):.2f})")
-    print(f"    Treatment effect in Partition C: {effect_c:+.2f}  (Treatment-C {mean(tc):.2f} - Control-C {mean(cc):.2f})")
+    print(
+        f"    Treatment effect in Partition A: {effect_a:+.2f}"
+        f"  (Treat-A {mean(ta):.2f} - Ctrl-A {mean(ca):.2f})"
+    )
+    print(
+        f"    Treatment effect in Partition C: {effect_c:+.2f}"
+        f"  (Treat-C {mean(tc):.2f} - Ctrl-C {mean(cc):.2f})"
+    )
     print(f"    Interaction (C - A):             {interaction:+.2f}  p={p_int:.4f} {sig}")
 
 # ──────────────────────────────────────────────────────────────────────
@@ -264,9 +286,15 @@ for metric in ["composite", "l2", "l3"]:
     mid = [d[metric] for d in tc_mid]
     late = [d[metric] for d in tc_late]
     print(f"  {METRIC_LABELS[metric]}:")
-    print(f"    Runs 1-3 (n=3): {mean(early):.2f} (±{sd(early):.2f})  values: {', '.join(f'{v:.2f}' for v in early)}")
-    print(f"    Runs 4-5 (n=2): {mean(mid):.2f} (±{sd(mid):.2f})  values: {', '.join(f'{v:.2f}' for v in mid)}")
-    print(f"    Runs 6-8 (n=3): {mean(late):.2f} (±{sd(late):.2f})  values: {', '.join(f'{v:.2f}' for v in late)}")
+    early_vals = ", ".join(f"{v:.2f}" for v in early)
+    mid_vals = ", ".join(f"{v:.2f}" for v in mid)
+    late_vals = ", ".join(f"{v:.2f}" for v in late)
+    print(f"    Runs 1-3 (n=3): {mean(early):.2f} (±{sd(early):.2f})"
+          f"  values: {early_vals}")
+    print(f"    Runs 4-5 (n=2): {mean(mid):.2f} (±{sd(mid):.2f})"
+          f"  values: {mid_vals}")
+    print(f"    Runs 6-8 (n=3): {mean(late):.2f} (±{sd(late):.2f})"
+          f"  values: {late_vals}")
     print()
 
 # ──────────────────────────────────────────────────────────────────────
