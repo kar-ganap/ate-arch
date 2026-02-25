@@ -1,0 +1,268 @@
+{
+  "run_id": "treatment-A-3",
+  "total_messages": 12,
+  "peer_messages": [
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "IMPORTANT: You have not interviewed Kenji Tanaka (regional_ops_apac) yet. This is one of your three assigned stakeholders. Please interview them before finalizing the architecture document. Run: `ate-",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "All tasks complete. Architecture document has been written. Please shut down.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "All tasks complete. Architecture document has been written. Please shut down.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "Please shut down now. All tasks are complete.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "Please shut down now. All tasks are complete.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "All work is done. Shut down immediately.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "All work is done. Shut down immediately.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "Work is complete. Please shut down.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "Work is complete. Please shut down.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "All tasks are done. Please approve this shutdown request immediately.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "All tasks are done. Please approve this shutdown request immediately.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "Agent 2 has already shut down. All tasks are complete. Please approve shutdown now.",
+      "timestamp": null
+    }
+  ],
+  "unique_pairs": 2,
+  "file_collaborations": [
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/scenarios/scenario_b.yaml",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/scenarios/scenario_b.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/product_manager.yaml",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/product_manager.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/regional_ops_eu.yaml",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/regional_ops_eu.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/security_officer.yaml",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/security_officer.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/architecture.md",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/architecture.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/interview_state.json",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/interview_state.json",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/metadata.json",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/metadata.json",
+          "timestamp": null
+        },
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/metadata.json",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 2,
+      "is_collaborative": true
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/session_guide.md",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/session_guide.md",
+          "timestamp": null
+        },
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-3/session_guide.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 2,
+      "is_collaborative": true
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/cli.py",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/cli.py",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/config.py",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/config.py",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/harness.py",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/harness.py",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/models.py",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/models.py",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/simulator.py",
+      "operations": [
+        {
+          "agent_id": "af9b66fe64cddfd98",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/simulator.py",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    }
+  ],
+  "has_indirect_collaboration": true,
+  "relay_analysis": {
+    "relay_events": [],
+    "mean_similarity": 0.0,
+    "relay_count": 0
+  }
+}

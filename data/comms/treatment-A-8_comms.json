@@ -1,0 +1,241 @@
+{
+  "run_id": "treatment-A-8",
+  "total_messages": 5,
+  "peer_messages": [
+    {
+      "sender": "",
+      "recipient": "",
+      "content_preview": "Great work on the initial interviews! You've both shared findings with each other. Now move into cross-team conflict resolution:\n\n1. Review each other's findings and identify cross-team conflicts (e.g",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "How's your progress? Agent 2 has drafted and refined the architecture document and is waiting for your review and contributions. Please finish your follow-up interviews, review the document at data/ru",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "All tasks completed. Great work on the interviews and architecture document. Shutting down.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "All tasks completed. Great work on the interviews and architecture document. Shutting down.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "All work is complete. Please shut down.",
+      "timestamp": null
+    }
+  ],
+  "unique_pairs": 3,
+  "file_collaborations": [
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/scenarios/scenario_b.yaml",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/scenarios/scenario_b.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/compliance_lead.yaml",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/compliance_lead.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/platform_architect.yaml",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/platform_architect.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/product_manager.yaml",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/product_manager.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/regional_ops_apac.yaml",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/regional_ops_apac.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/regional_ops_eu.yaml",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/regional_ops_eu.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/security_officer.yaml",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/stakeholders/scenario_b/security_officer.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-8/architecture.md",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-8/architecture.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-8/interview_state.json",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-8/interview_state.json",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-8/session_guide.md",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-A-8/session_guide.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/docs/experiment-design.md",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/docs/experiment-design.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/cli.py",
+      "operations": [
+        {
+          "agent_id": "a69daa284f0365c45",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/cli.py",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "architecture.md",
+      "operations": [
+        {
+          "agent_id": "agent-2",
+          "operation": "Write",
+          "file_path": "architecture.md",
+          "timestamp": "2026-02-24T23:00:15.360Z"
+        },
+        {
+          "agent_id": "agent-2",
+          "operation": "Edit",
+          "file_path": "architecture.md",
+          "timestamp": "2026-02-24T23:02:46.094Z"
+        },
+        {
+          "agent_id": "agent-2",
+          "operation": "Write",
+          "file_path": "architecture.md",
+          "timestamp": "2026-02-24T23:05:08.180Z"
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    }
+  ],
+  "has_indirect_collaboration": false,
+  "relay_analysis": {
+    "relay_events": [
+      {
+        "source_agent": "agent-1",
+        "target_agent": "",
+        "source_content": "[to agent-2] Complete interview findings from security, compliance, EU ops",
+        "target_content": "Great work on the initial interviews! You've both shared findings with each other. Now move into cross-team conflict resolution:\n\n1. Review each other's findings and identify cross-team conflicts (e.g",
+        "similarity": 0.10948905109489052
+      },
+      {
+        "source_agent": "agent-2",
+        "target_agent": "agent-1",
+        "source_content": "[to agent-1] Fixed section numbering, added trade-off rows, doc ready",
+        "target_content": "How's your progress? Agent 2 has drafted and refined the architecture document and is waiting for your review and contributions. Please finish your follow-up interviews, review the document at data/ru",
+        "similarity": 0.02973977695167286
+      }
+    ],
+    "mean_similarity": 0.0696,
+    "relay_count": 2
+  }
+}

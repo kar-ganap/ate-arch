@@ -1,0 +1,122 @@
+{
+  "run_id": "treatment-C-5",
+  "total_messages": 6,
+  "peer_messages": [
+    {
+      "sender": "",
+      "recipient": "",
+      "content_preview": "Status check: How are your interviews and cross-team coordination going? Please update me on your progress. If you've completed your interviews and coordination with your peer, please mark your task a",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "",
+      "content_preview": "Please wrap up your current work. If you have completed your interviews and shared findings with your peer, mark your task as completed. Once both tasks #1 and #2 are done, one of you should claim tas",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "Both interview tasks are complete. Task #3 (Produce final architecture document) is now unblocked. Please claim it and write the final architecture document to data/runs/treatment-C-5/architecture.md.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1",
+      "content_preview": "All tasks complete. Architecture document written. Shutting down the team.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "All tasks complete. Architecture document written. Shutting down the team.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2",
+      "content_preview": "Great work. All tasks are complete. Please shut down.",
+      "timestamp": null
+    }
+  ],
+  "unique_pairs": 3,
+  "file_collaborations": [
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/architecture.md",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/architecture.md",
+          "timestamp": null
+        },
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/architecture.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/interview_state.json",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/interview_state.json",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/metadata.json",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/metadata.json",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/session_guide.md",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-5/session_guide.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "architecture.md",
+      "operations": [
+        {
+          "agent_id": "agent-2",
+          "operation": "Write",
+          "file_path": "architecture.md",
+          "timestamp": "2026-02-24T07:42:14.556Z"
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    }
+  ],
+  "has_indirect_collaboration": false,
+  "relay_analysis": {
+    "relay_events": [],
+    "mean_similarity": 0.0,
+    "relay_count": 0
+  }
+}

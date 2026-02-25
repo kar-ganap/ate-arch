@@ -1,0 +1,130 @@
+{
+  "run_id": "treatment-C-3",
+  "total_messages": 5,
+  "peer_messages": [
+    {
+      "sender": "",
+      "recipient": "agent-1-security-arch",
+      "content_preview": "All tasks complete. Architecture document is finalized. Shutting down the team. Thank you for your work.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2-ops-product",
+      "content_preview": "All tasks complete. Architecture document is finalized. Shutting down the team. Thank you for your work.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-1-security-arch",
+      "content_preview": "All work is complete. The architecture document is finalized. Please shut down now.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2-ops-product",
+      "content_preview": "All work is complete. The architecture document is finalized. Please shut down now.",
+      "timestamp": null
+    },
+    {
+      "sender": "",
+      "recipient": "agent-2-ops-product",
+      "content_preview": "Agent 1 has already shut down. All work is complete — the architecture document is finalized and all tasks are marked completed. Please approve the pending shutdown request so we can wrap up the sessi",
+      "timestamp": null
+    }
+  ],
+  "unique_pairs": 2,
+  "file_collaborations": [
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/conflicts.yaml",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/conflicts.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/partitions.yaml",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/config/partitions.yaml",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-3/session_guide.md",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/data/runs/treatment-C-3/session_guide.md",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/cli.py",
+      "operations": [
+        {
+          "agent_id": "coordinator",
+          "operation": "Read",
+          "file_path": "/Users/kartikganapathi/Documents/Personal/random_projects/others_projects_checkout/ate-arch/src/ate_arch/cli.py",
+          "timestamp": null
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    },
+    {
+      "file_path": "architecture.md",
+      "operations": [
+        {
+          "agent_id": "agent-1-security-arch",
+          "operation": "Write",
+          "file_path": "architecture.md",
+          "timestamp": "2026-02-23T23:29:04.782Z"
+        },
+        {
+          "agent_id": "agent-1-security-arch",
+          "operation": "Read",
+          "file_path": "architecture.md",
+          "timestamp": "2026-02-23T23:29:40.977Z"
+        },
+        {
+          "agent_id": "agent-1-security-arch",
+          "operation": "Read",
+          "file_path": "architecture.md",
+          "timestamp": "2026-02-23T23:30:19.188Z"
+        }
+      ],
+      "agent_count": 1,
+      "is_collaborative": false
+    }
+  ],
+  "has_indirect_collaboration": false,
+  "relay_analysis": {
+    "relay_events": [
+      {
+        "source_agent": "agent-2-ops-product",
+        "target_agent": "agent-1-security-arch",
+        "source_content": "[to agent-1-security-arch] Architecture document complete with all enhancements and corrections",
+        "target_content": "All tasks complete. Architecture document is finalized. Shutting down the team. Thank you for your work.",
+        "similarity": 0.4221105527638191
+      }
+    ],
+    "mean_similarity": 0.4221,
+    "relay_count": 1
+  }
+}
