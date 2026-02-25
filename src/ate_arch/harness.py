@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 
 from ate_arch.config import (
@@ -75,13 +76,15 @@ def scaffold_run(
     if not state_path.exists():
         state_path.write_text("{}")
 
-    # Metadata template
-    metadata = RunMetadata(
-        run_id=run_id,
-        architecture=architecture,
-        partition_condition=partition_condition,
-    )
-    save_metadata(metadata, run_dir)
+    # Metadata template (never overwritten)
+    metadata_path = run_dir / "metadata.json"
+    if not metadata_path.exists():
+        metadata = RunMetadata(
+            run_id=run_id,
+            architecture=architecture,
+            partition_condition=partition_condition,
+        )
+        save_metadata(metadata, run_dir)
 
     return run_dir
 
@@ -177,11 +180,14 @@ Produce a markdown architecture document with:
 - Trade-off analysis with reasoning
 - Any hidden dependencies discovered
 
-Save the final document as `architecture.md` in the current directory."""
+Save the final document as `data/runs/{run_id}/architecture.md`."""
 
 
 def _treatment_prompt(
-    partition: Partition, scenario: object, run_id: str, agent_num: int = 0,
+    partition: Partition,
+    scenario: object,
+    run_id: str,
+    agent_num: int = 0,
 ) -> str:
     """Generate the treatment (symmetric peers) opening prompt."""
     agent_1_roster = _stakeholder_roster(partition.agent_1_stakeholders)
@@ -239,7 +245,7 @@ Produce a markdown architecture document with:
 - Trade-off analysis with reasoning
 - Any hidden dependencies discovered
 
-Save the final document as `architecture.md` in the current directory."""
+Save the final document as `data/runs/{run_id}/architecture.md`."""
 
 
 # --- Session guide ---
@@ -310,7 +316,6 @@ Copy-paste the following into the Claude Code session:
 - [ ] Record start time
 - [ ] Monitor session (Escape if stuck > 5 min)
 - [ ] Record end time and wall-clock duration
-- [ ] Copy final `architecture.md` to run directory
 - [ ] Note interview count (how many `ate-arch interview` calls)
 - [ ] Record observations in `notes.md`
 - [ ] Run `ate-arch update-metadata {run_id} --wall-clock <minutes> --model <model>`
@@ -398,3 +403,40 @@ def load_interview_state(run_dir: Path) -> dict[str, list[InterviewTurn]]:
     for sid, turns_data in raw.items():
         result[sid] = [InterviewTurn.model_validate(t) for t in turns_data]
     return result
+
+
+def count_interviews(run_dir: Path) -> int:
+    """Count total interview turns from interview_state.json."""
+    state = load_interview_state(run_dir)
+    return sum(len(turns) for turns in state.values())
+
+
+def extract_timestamps_from_transcript(
+    transcript_path: Path,
+) -> tuple[datetime, float]:
+    """Extract (started_at, wall_clock_minutes) from JSONL transcript.
+
+    Reads first and last entries with a ``timestamp`` field.
+    Returns (first_timestamp, delta_minutes).
+    """
+    first_ts: datetime | None = None
+    last_ts: datetime | None = None
+    with transcript_path.open() as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            entry = json.loads(line)
+            ts_str = entry.get("timestamp")
+            if not ts_str:
+                continue
+            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+            if first_ts is None:
+                first_ts = ts
+            last_ts = ts
+    if first_ts is None:
+        msg = f"No timestamp entries found in {transcript_path}"
+        raise ValueError(msg)
+    assert last_ts is not None
+    delta = (last_ts - first_ts).total_seconds() / 60.0
+    return first_ts, delta

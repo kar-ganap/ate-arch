@@ -397,29 +397,61 @@ def score_run(
     )
 
 
+# --- Model slug ---
+
+
+def model_slug(model: str) -> str:
+    """Short slug for file naming. E.g., 'claude-haiku-4-5-20251001' -> 'haiku'."""
+    for keyword in ("haiku", "sonnet", "opus"):
+        if keyword in model:
+            return keyword
+    return model.split("-")[1] if "-" in model else model
+
+
 # --- Persistence ---
 
 
-def save_result(result: RunResult, scores_dir: Path) -> Path:
-    """Save RunResult to scores_dir/{run_id}.json."""
+def _score_filename(run_id: str, scoring_model: str | None, suffix: str = "") -> str:
+    """Build score filename with optional model slug."""
+    slug = f"_{model_slug(scoring_model)}" if scoring_model else ""
+    return f"{run_id}{slug}{suffix}.json"
+
+
+def save_result(
+    result: RunResult,
+    scores_dir: Path,
+    *,
+    scoring_model: str | None = None,
+) -> Path:
+    """Save RunResult to scores_dir/{run_id}[_{model}].json."""
     scores_dir.mkdir(parents=True, exist_ok=True)
-    path = scores_dir / f"{result.run_id}.json"
+    path = scores_dir / _score_filename(result.run_id, scoring_model)
     path.write_text(result.model_dump_json(indent=2))
     return path
 
 
-def load_result(run_id: str, scores_dir: Path) -> RunResult:
-    """Load RunResult from scores_dir/{run_id}.json."""
-    path = scores_dir / f"{run_id}.json"
+def load_result(
+    run_id: str,
+    scores_dir: Path,
+    *,
+    scoring_model: str | None = None,
+) -> RunResult:
+    """Load RunResult from scores_dir/{run_id}[_{model}].json."""
+    path = scores_dir / _score_filename(run_id, scoring_model)
     if not path.exists():
         msg = f"Score file not found: {path}"
         raise FileNotFoundError(msg)
     return RunResult.model_validate_json(path.read_text())
 
 
-def save_scoring_detail(detail: ScoringResult, scores_dir: Path) -> Path:
-    """Save detailed ScoringResult to scores_dir/{run_id}_detail.json."""
+def save_scoring_detail(
+    detail: ScoringResult,
+    scores_dir: Path,
+    *,
+    scoring_model: str | None = None,
+) -> Path:
+    """Save detailed ScoringResult to scores_dir/{run_id}[_{model}]_detail.json."""
     scores_dir.mkdir(parents=True, exist_ok=True)
-    path = scores_dir / f"{detail.run_id}_detail.json"
+    path = scores_dir / _score_filename(detail.run_id, scoring_model, "_detail")
     path.write_text(detail.model_dump_json(indent=2))
     return path

@@ -9,6 +9,8 @@ from pathlib import Path
 import pytest
 
 from ate_arch.harness import (
+    count_interviews,
+    extract_timestamps_from_transcript,
     get_opening_prompt,
     get_run_dir,
     load_interview_state,
@@ -260,3 +262,111 @@ class TestInterviewState:
     def test_load_nonexistent_returns_empty(self, tmp_path: Path) -> None:
         loaded = load_interview_state(tmp_path)
         assert loaded == {}
+
+
+# --- count_interviews ---
+
+
+class TestCountInterviews:
+    def test_empty_state(self, tmp_path: Path) -> None:
+        """Empty interview state returns 0."""
+        save_interview_state({}, tmp_path)
+        assert count_interviews(tmp_path) == 0
+
+    def test_single_stakeholder(self, tmp_path: Path) -> None:
+        """Counts turns for a single stakeholder."""
+        state = {
+            "security_officer": [
+                InterviewTurn(
+                    question="Q1",
+                    response="R1",
+                    turn_number=1,
+                    timestamp=datetime(2026, 2, 23, 6, 30, tzinfo=UTC),
+                ),
+                InterviewTurn(
+                    question="Q2",
+                    response="R2",
+                    turn_number=2,
+                    timestamp=datetime(2026, 2, 23, 6, 35, tzinfo=UTC),
+                ),
+            ]
+        }
+        save_interview_state(state, tmp_path)
+        assert count_interviews(tmp_path) == 2
+
+    def test_multiple_stakeholders(self, tmp_path: Path) -> None:
+        """Counts turns across all stakeholders."""
+        state = {
+            "security_officer": [
+                InterviewTurn(
+                    question="Q1",
+                    response="R1",
+                    turn_number=1,
+                    timestamp=datetime(2026, 2, 23, 6, 30, tzinfo=UTC),
+                ),
+            ],
+            "compliance_lead": [
+                InterviewTurn(
+                    question="Q1",
+                    response="R1",
+                    turn_number=1,
+                    timestamp=datetime(2026, 2, 23, 6, 31, tzinfo=UTC),
+                ),
+                InterviewTurn(
+                    question="Q2",
+                    response="R2",
+                    turn_number=2,
+                    timestamp=datetime(2026, 2, 23, 6, 32, tzinfo=UTC),
+                ),
+                InterviewTurn(
+                    question="Q3",
+                    response="R3",
+                    turn_number=3,
+                    timestamp=datetime(2026, 2, 23, 6, 33, tzinfo=UTC),
+                ),
+            ],
+        }
+        save_interview_state(state, tmp_path)
+        assert count_interviews(tmp_path) == 4
+
+
+# --- extract_timestamps_from_transcript ---
+
+
+class TestExtractTimestampsFromTranscript:
+    def test_normal_transcript(self, tmp_path: Path) -> None:
+        """Extracts start time and wall clock from first/last timestamps."""
+        transcript = tmp_path / "t.jsonl"
+        lines = [
+            json.dumps({"type": "user", "timestamp": "2026-02-23T06:30:00.000Z"}),
+            json.dumps({"type": "assistant", "timestamp": "2026-02-23T06:32:00.000Z"}),
+            json.dumps({"type": "assistant", "timestamp": "2026-02-23T06:40:00.000Z"}),
+        ]
+        transcript.write_text("\n".join(lines) + "\n")
+        started_at, wall_clock = extract_timestamps_from_transcript(transcript)
+        assert started_at.year == 2026
+        assert abs(wall_clock - 10.0) < 0.01
+
+    def test_skips_entries_without_timestamp(self, tmp_path: Path) -> None:
+        """Entries without timestamp field are ignored."""
+        transcript = tmp_path / "t.jsonl"
+        lines = [
+            json.dumps({"type": "file-history-snapshot"}),
+            json.dumps({"type": "user", "timestamp": "2026-02-23T07:00:00.000Z"}),
+            json.dumps({"type": "progress"}),
+            json.dumps({"type": "assistant", "timestamp": "2026-02-23T07:15:00.000Z"}),
+        ]
+        transcript.write_text("\n".join(lines) + "\n")
+        started_at, wall_clock = extract_timestamps_from_transcript(transcript)
+        assert abs(wall_clock - 15.0) < 0.01
+
+    def test_single_timestamp_entry(self, tmp_path: Path) -> None:
+        """Single entry with timestamp gives 0.0 wall clock."""
+        transcript = tmp_path / "t.jsonl"
+        lines = [
+            json.dumps({"type": "user", "timestamp": "2026-02-23T08:00:00.000Z"}),
+        ]
+        transcript.write_text("\n".join(lines) + "\n")
+        started_at, wall_clock = extract_timestamps_from_transcript(transcript)
+        assert wall_clock == 0.0
+        assert started_at.hour == 8
