@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from ate_arch.models import RESOLUTION_SCORES, ResolutionQuality, RubricWeights, RunResult
+from ate_arch.models import ResolutionQuality, RubricWeights, RunResult
 
 DATA = Path(__file__).parent.parent / "data"
 WEIGHTS = RubricWeights()
@@ -108,7 +108,10 @@ for layer in ["l1", "l2", "l3", "l4"]:
 # === L3 BREAKDOWN COMPARISON ===
 print("\n=== L3 RESOLUTION BREAKDOWN: HAIKU vs SONNET ===")
 print(f"{'Run':<18} {'--- Haiku ---':>20} {'--- Sonnet ---':>20}")
-print(f"{'':18} {'Opt':>4} {'Acc':>4} {'Poor':>4} {'Miss':>4}  {'Opt':>4} {'Acc':>4} {'Poor':>4} {'Miss':>4}")
+print(
+    f"{'':18} {'Opt':>4} {'Acc':>4} {'Poor':>4} {'Miss':>4}"
+    f"  {'Opt':>4} {'Acc':>4} {'Poor':>4} {'Miss':>4}"
+)
 print("-" * 60)
 for rid in RUNS:
     h = all_data[rid]["haiku"]
@@ -125,7 +128,10 @@ print(f"{'Cell':<15} {'Scorer':<8} {'Comp':>6} {'SD':>5} {'L1':>6} {'L2':>6} {'L
 print("-" * 60)
 for prefix, label in cell_prefixes:
     for scorer in SCORERS:
-        runs = [all_data[rid][scorer] for rid in RUNS if rid.startswith(prefix) and all_data[rid][scorer]]
+        runs = [
+            all_data[rid][scorer] for rid in RUNS
+            if rid.startswith(prefix) and all_data[rid][scorer]
+        ]
         comps = [r["composite"] for r in runs]
         print(f"{label:<15} {scorer:<8} {mean(comps):>6.2f} {sd(comps):>5.2f} "
               f"{mean([r['l1'] for r in runs]):>6.2f} "
@@ -135,11 +141,17 @@ for prefix, label in cell_prefixes:
 
 # === ARCHITECTURE MEANS ===
 print("\n=== ARCHITECTURE MEANS ===")
-print(f"{'Arch':<12} {'Scorer':<8} {'n':>2} {'Comp':>6} {'SD':>5} {'L1':>6} {'L2':>6} {'L3':>6} {'L4':>6}")
+print(
+    f"{'Arch':<12} {'Scorer':<8} {'n':>2} {'Comp':>6}"
+    f" {'SD':>5} {'L1':>6} {'L2':>6} {'L3':>6} {'L4':>6}"
+)
 print("-" * 65)
 for arch, label in [("control", "Control"), ("treatment", "Treatment")]:
     for scorer in SCORERS:
-        runs = [all_data[rid][scorer] for rid in RUNS if rid.startswith(arch) and all_data[rid][scorer]]
+        runs = [
+            all_data[rid][scorer] for rid in RUNS
+            if rid.startswith(arch) and all_data[rid][scorer]
+        ]
         comps = [r["composite"] for r in runs]
         print(f"{label:<12} {scorer:<8} {len(runs):>2} {mean(comps):>6.2f} {sd(comps):>5.2f} "
               f"{mean([r['l1'] for r in runs]):>6.2f} "
@@ -151,7 +163,10 @@ for arch, label in [("control", "Control"), ("treatment", "Treatment")]:
 print("\n=== COMPOSITE GRID ===")
 for scorer in SCORERS:
     print(f"\n  {scorer.upper()}:")
-    print(f"  {'Cell':<15} {'Run1':>6} {'Run2':>6} {'Run3':>6} {'Run4':>6} {'Run5':>6} {'Run6':>6} {'Run7':>6} {'Run8':>6} {'Mean':>6}")
+    print(
+        f"  {'Cell':<15} {'Run1':>6} {'Run2':>6} {'Run3':>6} {'Run4':>6}"
+        f" {'Run5':>6} {'Run6':>6} {'Run7':>6} {'Run8':>6} {'Mean':>6}"
+    )
     print(f"  {'-' * 53}")
     for prefix, label in cell_prefixes:
         vals = []
@@ -169,9 +184,16 @@ for scorer in SCORERS:
 
 # === EFFICIENCY & COMMUNICATION (scorer-independent) ===
 print("\n=== EFFICIENCY & COMMUNICATION ===")
-print(f"{'Run':<18} {'Wall(m)':>7} {'Intrvw':>6} {'Msgs':>5} {'Pairs':>5} {'IndirC':>6} {'Relay':>5} {'RelSim':>6}")
+print(
+    f"{'Run':<18} {'Wall(m)':>7} {'Intrvw':>6} {'Msgs':>5}"
+    f" {'Pairs':>5} {'IndirC':>6} {'Relay':>5} {'RelSim':>6}"
+)
 print("-" * 70)
 for rid in RUNS:
     d = meta_comms[rid]
-    print(f"{rid:<18} {d['wall_clock']:>7.1f} {d['interviews']:>6} {d['total_msgs']:>5} "
-          f"{d['unique_pairs']:>5} {str(d['indirect']):>6} {d['relay_count']:>5} {d['relay_sim']:>6.3f}")
+    print(
+        f"{rid:<18} {d['wall_clock']:>7.1f} {d['interviews']:>6}"
+        f" {d['total_msgs']:>5} {d['unique_pairs']:>5}"
+        f" {str(d['indirect']):>6} {d['relay_count']:>5}"
+        f" {d['relay_sim']:>6.3f}"
+    )

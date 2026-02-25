@@ -303,6 +303,8 @@ Missing = 0.0.
 
 ### 2.1 Composite Scores
 
+![Composite score distributions by cell](figures/composite_boxplot.png)
+
 All scores by Sonnet 4.6. Composite = weighted sum of L1–L4.
 
 | Cell | Run 1 | Run 2 | Run 3 | Run 4 | Run 5 | Run 6 | Run 7 | Run 8 | Mean | SD |
@@ -333,6 +335,8 @@ concentrates in L2 (conflict identification), L3 (resolution quality), and L4
 synthesis.
 
 ### 2.3 L3 Resolution Breakdown
+
+![L3 resolution quality breakdown by cell](figures/l3_breakdown.png)
 
 Number of conflicts scored Optimal / Acceptable / Poor / Missing per run:
 
@@ -510,6 +514,8 @@ than in partition A for resolution quality — but the sample size is
 insufficient to confirm this statistically.
 
 ### 3.5 Dose-Response
+
+![Dose-response curve](figures/dose_response.png)
 
 | Metric | Treatment effect in A (25% cross) | Treatment effect in C (75% cross) | Gradient |
 |--------|----------------------------------|----------------------------------|----------|
@@ -691,6 +697,8 @@ architecture documents.
 ---
 
 ## 5. Cross-Validation: Rubric vs Blind Review
+
+![Blind review vs rubric scoring scatter](figures/blind_vs_rubric.png)
 
 ### 5.1 Champion Comparison
 
