@@ -51,6 +51,11 @@ uv run ate-arch list-runs
 uv run ate-arch score <run-id>
 ```
 
+## Built On
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) — agentic coding tool
+- [Agent Teams & Subagents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) — the multi-agent infrastructure under study
+
 ## Validation Gates
 
 ```bash
