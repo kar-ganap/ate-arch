@@ -18,6 +18,7 @@ experiments. Prior experiments
 found ceiling effects and zero communication on easier tasks.
 
 Part of the [ate-series](https://github.com/kar-ganap/ate-series).
+Full write-up: [paper](https://github.com/kar-ganap/ate-series/blob/main/paper/main.pdf).
 
 ## Results at a Glance
 
